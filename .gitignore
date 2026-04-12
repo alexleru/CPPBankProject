@@ -1,0 +1,44 @@
+# Build artifacts
+build/
+*.o
+BankSystem
+BankSystem.exe
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Backup files
+*.bak
+*.backup
+
+# Compiled binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+test_*
+*_test
+
+# Documentation build
+docs/build/
+docs/_build/
