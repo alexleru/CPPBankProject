@@ -1,34 +1,14 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-// Bank Information
-#define BANK_NAME "National C++ Bank"
-#define VERSION "1.0.0"
+#include <string>
 
-// Account Constraints
-#define MAX_ACCOUNTS_PER_CUSTOMER 5
-#define MIN_SAVINGS_BALANCE 100.0
-#define OVERDRAFT_LIMIT 500.0
-#define DEFAULT_INTEREST_RATE 0.035
-#define MAX_LOAN_AMOUNT 100000.0
-
-// Processing Constants
-#define SAVINGS_INTEREST_RATE 0.035
-#define CHECKING_INTEREST_RATE 0.001
-#define MONTHLY_CHECKING_FEE 5.0
-#define LOAN_INTEREST_RATE 0.08
-
-// ID Generation
-#define CUSTOMER_ID_PREFIX "CUST"
-#define ACCOUNT_ID_PREFIX "ACC"
-
-// Platform-specific
-#ifdef _WIN32
-    #define CLEAR_SCREEN "cls"
-    #define PLATFORM_NAME "Windows"
-#else
-    #define CLEAR_SCREEN "clear"
-    #define PLATFORM_NAME "Linux/Unix"
-#endif
+const std::string BANK_NAME                 = "Small Bank System";
+const int         MAX_ACCOUNTS_PER_CUSTOMER  = 5;
+const double      SAVINGS_INTEREST_RATE      = 0.035;
+const double      OVERDRAFT_LIMIT            = 500.0;
+const double      LOAN_INTEREST_RATE         = 0.08;
+const std::string CUSTOMER_ID_PREFIX         = "CUST";
+const std::string ACCOUNT_ID_PREFIX          = "ACC";
 
 #endif // CONSTANTS_H

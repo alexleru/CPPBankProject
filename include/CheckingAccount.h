@@ -3,38 +3,17 @@
 
 #include "Account.h"
 
-// CheckingAccount class - inherits from Account
 class CheckingAccount : public Account {
 private:
     double overdraftLimit;
-    double monthlyFee;
-    int monthlyTransactionCount;
 
 public:
-    // Constructor
     CheckingAccount(double initialBalance, double overdraft = 500.0);
-
-    // Destructor
     ~CheckingAccount();
 
-    // Pure virtual implementations
-    AccountType getAccountType() const;
-    void applyMonthlyProcessing();
-
-    // Specific methods for CheckingAccount
-    bool withdraw(double amount, const std::string& description = "Withdrawal");
-    void applyMonthlyFee();
-    void resetMonthlyTransactionCount();
-    int getMonthlyTransactionCount() const;
+    std::string getAccountType() const;
     double getOverdraftLimit() const;
-    double getAvailableBalance() const;
-
-    // Display
-    void displayAccountInfo() const;
-
-private:
-    // Checks if withdrawal would exceed overdraft
-    bool canWithdraw(double amount) const;
+    void display() const;
 };
 
 #endif // CHECKINGACCOUNT_H

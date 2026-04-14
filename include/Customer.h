@@ -3,77 +3,39 @@
 
 #include <string>
 #include <vector>
-#include "Enums.h"
 #include "Account.h"
+#include "Enums.h"
 
-// Forward declaration
-class Account;
-
-// Type aliases for better readability
-typedef std::vector<Account*> AccountList;
-
-// Customer class
 class Customer {
 private:
     std::string customerId;
     std::string firstName;
     std::string lastName;
     std::string email;
-    std::string phoneNumber;
+    std::string phone;
     std::string address;
     CustomerStatus status;
-    time_t registrationDate;
-    AccountList accounts;
+    std::vector<Account*> accounts;
 
 public:
-    // Constructor
     Customer(const std::string& firstName, const std::string& lastName,
-             const std::string& email, const std::string& phone, const std::string& address);
-
-    // Destructor
+             const std::string& email, const std::string& phone,
+             const std::string& address);
     ~Customer();
 
-    // Getters
     std::string getCustomerId() const;
-    std::string getFirstName() const;
-    std::string getLastName() const;
-    std::string getEmail() const;
-    std::string getPhoneNumber() const;
-    std::string getAddress() const;
-    CustomerStatus getStatus() const;
-    time_t getRegistrationDate() const;
-    int getAccountCount() const;
+    std::string getFirstName()  const;
+    std::string getLastName()   const;
+    std::string getEmail()      const;
+    std::string getPhone()      const;
+    std::string getAddress()    const;
+    CustomerStatus getStatus()  const;
+    int getAccountCount()       const;
 
-    // Setters
-    void setFirstName(const std::string& name);
-    void setLastName(const std::string& name);
-    void setEmail(const std::string& email);
-    void setPhoneNumber(const std::string& phone);
-    void setAddress(const std::string& addr);
-    void setStatus(CustomerStatus newStatus);
-
-    // Account management
-    Account* addAccount(Account* account);
-    Account* getAccount(int index) const;
-    Account* getAccountById(const std::string& accountId) const;
     bool canAddAccount() const;
-    bool removeAccount(const std::string& accountId);
-
-    // Validation and operations
-    bool validate() const;
+    bool addAccount(Account* account);
+    bool validate(std::string& errorMsg) const;
     void display() const;
-    void displayPortfolio() const;
-
-    // Friend functions for external access to private data
-    friend void debugCustomerInfo(const Customer& customer);
-    friend bool validateCustomerData(const Customer& customer);
-    friend void updateCustomerStatus(Customer& customer, CustomerStatus newStatus);
-    friend AccountList getCustomerAccounts(const Customer& customer);
-
-private:
-    // Helper method to generate customer ID
-    static std::string generateCustomerId();
-    static int customerCounter;
 };
 
 #endif // CUSTOMER_H
