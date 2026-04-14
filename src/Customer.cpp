@@ -2,13 +2,23 @@
 #include "../include/Utils.h"
 #include "../include/Account.h"
 #include "../include/Constants.h"
+#include "../include/Globals.h"
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <sstream>
 #include <stdexcept>
 
 // Initialize static counter
 int Customer::customerCounter = 0;
+
+// Destructor - free owned account objects
+Customer::~Customer() {
+    for (size_t i = 0; i < accounts.size(); ++i) {
+        delete accounts[i];
+    }
+    accounts.clear();
+}
 
 // Constructor - creates new customer with validation
 Customer::Customer(const std::string& firstName, const std::string& lastName,
@@ -19,14 +29,16 @@ Customer::Customer(const std::string& firstName, const std::string& lastName,
       email(email),
       phoneNumber(phone),
       address(address),
-      status(CustomerStatus::ACTIVE),
-      registrationDate(std::time(nullptr)) {
+      status(ACTIVE),
+      registrationDate(std::time(NULL)) {
+    // Increment global statistics
+    totalCustomersCreated++;
 }
 
 // Private method to generate unique customer ID
 std::string Customer::generateCustomerId() {
     std::ostringstream oss;
-    oss << CUSTOMER_ID_PREFIX << std::setfill('0') << std::setw(6) << (++customerCounter);
+    oss << CUSTOMER_ID_PREFIX << std::setfill('0') << std::setw(6) << (++globalCustomerCounter);
     return oss.str();
 }
 
@@ -99,12 +111,12 @@ void Customer::setStatus(CustomerStatus newStatus) {
 }
 
 // Add account to customer's account list
-std::shared_ptr<Account> Customer::addAccount(std::shared_ptr<Account> account) {
+Account* Customer::addAccount(Account* account) {
     if (!canAddAccount()) {
         throw std::runtime_error("Maximum number of accounts reached for this customer");
     }
     
-    if (!account) {
+    if (account == NULL) {
         throw std::invalid_argument("Cannot add null account");
     }
     
@@ -113,38 +125,37 @@ std::shared_ptr<Account> Customer::addAccount(std::shared_ptr<Account> account) 
 }
 
 // Get account by index
-std::shared_ptr<Account> Customer::getAccount(int index) const {
+Account* Customer::getAccount(int index) const {
     if (index < 0 || index >= static_cast<int>(accounts.size())) {
-        return nullptr;
+        return NULL;
     }
     return accounts[index];
 }
 
 // Get account by ID
-std::shared_ptr<Account> Customer::getAccountById(const std::string& accountId) const {
-    for (const auto& account : accounts) {
-        if (account && account->getAccountId() == accountId) {
+Account* Customer::getAccountById(const std::string& accountId) const {
+    for (int i = 0; i < static_cast<int>(accounts.size()); ++i) {
+        Account* account = accounts[i];
+        if (account != NULL && account->getAccountId() == accountId) {
             return account;
         }
     }
-    return nullptr;
+    return NULL;
 }
 
 // Check if customer can add more accounts
 bool Customer::canAddAccount() const {
-    return accounts.size() < MAX_ACCOUNTS_PER_CUSTOMER;
+    return static_cast<int>(accounts.size()) < MAX_ACCOUNTS_PER_CUSTOMER;
 }
 
 // Remove account from customer list
 bool Customer::removeAccount(const std::string& accountId) {
-    auto it = std::find_if(accounts.begin(), accounts.end(),
-                          [&accountId](const std::shared_ptr<Account>& acc) {
-                              return acc && acc->getAccountId() == accountId;
-                          });
-    
-    if (it != accounts.end()) {
-        accounts.erase(it);
-        return true;
+    for (int i = 0; i < static_cast<int>(accounts.size()); ++i) {
+        Account* acc = accounts[i];
+        if (acc != NULL && acc->getAccountId() == accountId) {
+            accounts.erase(accounts.begin() + i);
+            return true;
+        }
     }
     return false;
 }
@@ -191,16 +202,16 @@ void Customer::display() const {
     
     std::string statusStr;
     switch (status) {
-        case CustomerStatus::ACTIVE:
+        case ACTIVE:
             statusStr = "Active";
             break;
-        case CustomerStatus::INACTIVE:
+        case INACTIVE:
             statusStr = "Inactive";
             break;
-        case CustomerStatus::SUSPENDED:
+        case SUSPENDED:
             statusStr = "Suspended";
             break;
-        case CustomerStatus::CLOSED:
+        case CLOSED:
             statusStr = "Closed";
             break;
     }
@@ -236,4 +247,44 @@ void Customer::displayPortfolio() const {
     }
     
     std::cout << "=====================================\n";
+}
+
+// Friend function implementations
+
+// Debug function to access private customer information
+void debugCustomerInfo(const Customer& customer) {
+    std::cout << "\n=== DEBUG CUSTOMER INFO ===\n";
+    std::cout << "Customer ID: " << customer.customerId << std::endl;
+    std::cout << "Name: " << customer.firstName << " " << customer.lastName << std::endl;
+    std::cout << "Email: " << customer.email << std::endl;
+    std::cout << "Phone: " << customer.phoneNumber << std::endl;
+    std::cout << "Address: " << customer.address << std::endl;
+    std::cout << "Status: " << customer.status << std::endl;
+    std::cout << "Registration Date: " << customer.registrationDate << std::endl;
+    std::cout << "Account Count: " << customer.accounts.size() << std::endl;
+    std::cout << "===========================\n";
+}
+
+// Friend function to validate customer data
+bool validateCustomerData(const Customer& customer) {
+    if (customer.firstName.empty() || customer.lastName.empty()) {
+        std::cerr << "ERROR: Customer " << customer.customerId << " has empty name fields\n";
+        return false;
+    }
+    if (customer.email.empty() || customer.email.find('@') == std::string::npos) {
+        std::cerr << "ERROR: Customer " << customer.customerId << " has invalid email\n";
+        return false;
+    }
+    return true;
+}
+
+// Friend function to update customer status (administrative function)
+void updateCustomerStatus(Customer& customer, CustomerStatus newStatus) {
+    customer.status = newStatus;
+    std::cout << "Customer " << customer.customerId << " status updated to: " << newStatus << std::endl;
+}
+
+// Friend function to get customer accounts list
+AccountList getCustomerAccounts(const Customer& customer) {
+    return customer.accounts;
 }

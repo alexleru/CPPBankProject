@@ -7,12 +7,17 @@
 #include "Customer.h"
 #include "Account.h"
 
+// Type aliases for better readability
+typedef std::vector<Customer> CustomerList;
+typedef std::map<std::string, Account*> AccountRegistry;
+typedef std::vector<Account*> AccountList;
+
 // Bank class - manages all customers and accounts
 class Bank {
 private:
     std::string bankName;
-    std::vector<Customer> customers;
-    std::map<std::string, Account*> accountRegistry; // Fast account lookup
+    CustomerList customers;
+    AccountRegistry accountRegistry; // Fast account lookup
 
 public:
     // Constructor
@@ -36,7 +41,7 @@ public:
                                           double additionalParam = 0.0);
     Account* findAccount(const std::string& accountId) const;
     void searchAccounts(const std::string& customerId) const;
-    std::vector<Account*> getCustomerAccounts(const std::string& customerId) const;
+    AccountList getCustomerAccounts(const std::string& customerId) const;
     void listAllAccounts() const;
 
     // Basic operations
@@ -56,6 +61,12 @@ public:
 
     // Display
     void displayBankInfo() const;
+
+    // Friend functions for external access to private data
+    friend void debugBankInfo(const Bank& bank);
+    friend CustomerList getAllCustomers(const Bank& bank);
+    friend AccountRegistry getAccountRegistry(const Bank& bank);
+    friend void forceCloseAccount(Bank& bank, const std::string& accountId);
 
 private:
     // Helper method for finding customer index

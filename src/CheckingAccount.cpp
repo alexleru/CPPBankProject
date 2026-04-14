@@ -6,15 +6,19 @@
 
 // Constructor - initializes checking account with overdraft limit
 CheckingAccount::CheckingAccount(double initialBalance, double overdraft)
-    : Account(AccountType::CHECKING, initialBalance),
+    : Account(CHECKING, initialBalance),
       overdraftLimit(overdraft),
       monthlyFee(MONTHLY_CHECKING_FEE),
       monthlyTransactionCount(0) {
 }
 
+// Destructor
+CheckingAccount::~CheckingAccount() {
+}
+
 // Pure virtual implementation - returns account type
 AccountType CheckingAccount::getAccountType() const {
-    return AccountType::CHECKING;
+    return CHECKING;
 }
 
 // Monthly processing - applies monthly fee
@@ -40,11 +44,11 @@ void CheckingAccount::applyMonthlyFee() {
             balance -= monthlyFee;
         }
         
-        lastModifiedDate = std::time(nullptr);
+        lastModifiedDate = std::time(NULL);
         
         // Record fee transaction
-        Transaction transaction(TransactionType::FEE, monthlyFee, "Monthly Service Fee");
-        transaction.setStatus(TransactionStatus::COMPLETED);
+        Transaction transaction(FEE, monthlyFee, "Monthly Service Fee");
+        transaction.setStatus(COMPLETED);
         addTransaction(transaction);
         
         std::cout << "Monthly fee applied: " << Utils::formatCurrency(monthlyFee) 
@@ -72,11 +76,11 @@ bool CheckingAccount::withdraw(double amount, const std::string& description) {
     
     // Perform withdrawal (may result in negative balance if overdraft used)
     balance -= amount;
-    lastModifiedDate = std::time(nullptr);
+    lastModifiedDate = std::time(NULL);
     monthlyTransactionCount++;
     
     // Record transaction
-    Transaction transaction(TransactionType::WITHDRAWAL, amount, description);
+    Transaction transaction(WITHDRAWAL, amount, description);
     addTransaction(transaction);
     
     std::cout << "Withdrawal successful! " << Utils::formatCurrency(amount) 

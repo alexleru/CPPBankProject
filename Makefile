@@ -2,7 +2,7 @@
 
 # Compiler settings
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -pedantic -I./include
+CXXFLAGS = -std=c++03 -Wall -Wextra -pedantic -I./include
 LDFLAGS =
 
 # Directories
@@ -19,6 +19,7 @@ SOURCES = $(SRC_DIR)/main.cpp \
           $(SRC_DIR)/SavingsAccount.cpp \
           $(SRC_DIR)/CheckingAccount.cpp \
           $(SRC_DIR)/LoanAccount.cpp \
+          $(SRC_DIR)/Globals.cpp \
           $(SRC_DIR)/Bank.cpp
 
 # Object files (placed in BUILD_DIR)

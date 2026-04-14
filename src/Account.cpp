@@ -1,6 +1,7 @@
 #include "../include/Account.h"
 #include "../include/Utils.h"
 #include "../include/Constants.h"
+#include "../include/Globals.h"
 #include <iostream>
 #include <iomanip>
 #include <exception>
@@ -14,6 +15,8 @@ Account::Account(AccountType accountType, double initialBalance)
       lastModifiedDate(std::time(NULL)),
       isActive(true) {
     accountId = Utils::generateAccountId();
+    // Increment global statistics
+    totalAccountsCreated++;
 }
 
 // Destructor
@@ -32,7 +35,7 @@ void Account::deposit(double amount, const std::string& description) {
     
     // Update balance
     balance += amount;
-    lastModifiedDate = std::time(nullptr);
+    lastModifiedDate = std::time(NULL);
     
     // Record transaction
     Transaction transaction(DEPOSIT, amount, description);
@@ -60,7 +63,7 @@ bool Account::withdraw(double amount, const std::string& description) {
     
     // Update balance
     balance -= amount;
-    lastModifiedDate = std::time(nullptr);
+    lastModifiedDate = std::time(NULL);
     
     // Record transaction
     Transaction transaction(WITHDRAWAL, amount, description);
@@ -122,14 +125,14 @@ time_t Account::getCreatedDate() const {
     return createdDate;
 }
 
-const std::vector<Transaction>& Account::getTransactionHistory() const {
+const TransactionHistory& Account::getTransactionHistory() const {
     return transactionHistory;
 }
 
 // Setters
 void Account::setIsActive(bool active) {
     isActive = active;
-    lastModifiedDate = std::time(nullptr);
+    lastModifiedDate = std::time(NULL);
 }
 
 // Static method to get interest rate for account type
@@ -144,7 +147,7 @@ double Account::getInterestForType(AccountType type) {
         default:
             return 0.0;
     }
-}}
+}
 
 // Static method to convert account type to string
 std::string Account::typeToString(AccountType type) {
@@ -167,4 +170,44 @@ void Account::displayAccountInfo() const {
 // Format balance for display
 std::string Account::formatBalance() const {
     return Utils::formatCurrency(balance);
+}
+
+// Friend function implementations
+
+// Debug function to access private account information
+void debugAccountInfo(const Account& account) {
+    std::cout << "\n=== DEBUG ACCOUNT INFO ===\n";
+    std::cout << "Account ID: " << account.accountId << std::endl;
+    std::cout << "Type: " << account.typeToString(account.type) << std::endl;
+    std::cout << "Balance: " << account.balance << std::endl;
+    std::cout << "Is Active: " << (account.isActive ? "Yes" : "No") << std::endl;
+    std::cout << "Created Date: " << account.createdDate << std::endl;
+    std::cout << "Last Modified: " << account.lastModifiedDate << std::endl;
+    std::cout << "Transaction Count: " << account.transactionHistory.size() << std::endl;
+    std::cout << "===========================\n";
+}
+
+// Friend function to validate account balance
+bool validateAccountBalance(const Account& account) {
+    if (account.balance < 0) {
+        std::cerr << "ERROR: Account " << account.accountId << " has negative balance: " << account.balance << std::endl;
+        return false;
+    }
+    return true;
+}
+
+// Friend function to force update account balance (for administrative purposes)
+void forceBalanceUpdate(Account& account, double newBalance) {
+    if (newBalance >= 0) {
+        account.balance = newBalance;
+        account.lastModifiedDate = std::time(NULL);
+        std::cout << "Account " << account.accountId << " balance forcibly updated to: " << Utils::formatCurrency(newBalance) << std::endl;
+    } else {
+        std::cerr << "ERROR: Cannot set negative balance\n";
+    }
+}
+
+// Friend function to get account transaction history
+TransactionHistory getAccountTransactions(const Account& account) {
+    return account.transactionHistory;
 }

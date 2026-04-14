@@ -6,13 +6,16 @@
 #include "Enums.h"
 #include "Transaction.h"
 
+// Type aliases for better readability
+typedef std::vector<Transaction> TransactionHistory;
+
 // Abstract base class for all account types
 class Account {
 protected:
     std::string accountId;
     AccountType type;
     double balance;
-    std::vector<Transaction> transactionHistory;
+    TransactionHistory transactionHistory;
     time_t createdDate;
     time_t lastModifiedDate;
     bool isActive;
@@ -38,7 +41,7 @@ public:
     double getBalance() const;
     bool getIsActive() const;
     time_t getCreatedDate() const;
-    const std::vector<Transaction>& getTransactionHistory() const;
+    const TransactionHistory& getTransactionHistory() const;
 
     // Setters
     void setIsActive(bool active);
@@ -52,6 +55,12 @@ public:
 
     // Display account information
     virtual void displayAccountInfo() const;
+
+    // Friend functions for external access to private data
+    friend void debugAccountInfo(const Account& account);
+    friend bool validateAccountBalance(const Account& account);
+    friend void forceBalanceUpdate(Account& account, double newBalance);
+    friend TransactionHistory getAccountTransactions(const Account& account);
 
 protected:
     // Protected method to format balance display

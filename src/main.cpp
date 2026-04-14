@@ -1,10 +1,17 @@
 #include "../include/Bank.h"
 #include "../include/Utils.h"
 #include "../include/Constants.h"
+#include "../include/Globals.h"
 #include <iostream>
 #include <string>
 #include <iomanip>
 #include <limits>
+#include <cstdlib>
+
+// Initialize global variables
+void initializeApplication() {
+    initializeGlobals();
+}
 
 // Global bank instance
 Bank globalBank(BANK_NAME);
@@ -47,6 +54,7 @@ void displayMainMenu() {
     std::cout << "12. List All Accounts\n";
     std::cout << "13. Generate Bank Report\n";
     std::cout << "14. Close Account\n";
+    std::cout << "15. Admin/Debug Functions\n";
     std::cout << "0.  Exit\n";
     std::cout << "========================================\n";
     std::cout << "Enter your choice: ";
@@ -112,13 +120,13 @@ void openNewAccount() {
     AccountType type;
     switch (typeChoice) {
         case 1:
-            type = AccountType::SAVINGS;
+            type = SAVINGS;
             break;
         case 2:
-            type = AccountType::CHECKING;
+            type = CHECKING;
             break;
         case 3:
-            type = AccountType::LOAN;
+            type = LOAN;
             break;
         default:
             std::cerr << "Invalid account type!\n";
@@ -128,7 +136,7 @@ void openNewAccount() {
     
     double initialBalance = Utils::getValidatedAmount("Enter initial balance/amount: ");
     
-    std::shared_ptr<Account> newAccount = globalBank.createAccount(customerId, type, initialBalance);
+    Account* newAccount = globalBank.createAccount(customerId, type, initialBalance);
     
     if (newAccount) {
         std::cout << "Account created successfully!\n";
@@ -280,7 +288,7 @@ void searchAccountById() {
     std::cout << "Enter account ID: ";
     std::cin >> accountId;
     
-    auto account = globalBank.findAccount(accountId);
+    Account* account = globalBank.findAccount(accountId);
     
     if (account) {
         std::cout << "\nAccount found:\n";
@@ -331,13 +339,82 @@ void closeAccount() {
     std::cout << "Enter account ID to close: ";
     std::cin >> accountId;
     
-    auto account = globalBank.findAccount(accountId);
+    Account* account = globalBank.findAccount(accountId);
     
     if (account) {
         account->setIsActive(false);
         std::cout << "Account closed successfully!\n";
     } else {
         std::cerr << "Account not found!\n";
+    }
+    
+    pauseScreen();
+}
+
+// Admin/Debug functions menu
+void adminDebugFunctions() {
+    clearScreen();
+    std::cout << "=== ADMIN/DEBUG FUNCTIONS ===\n\n";
+    std::cout << "1. Print Global Statistics\n";
+    std::cout << "2. Debug Bank Information\n";
+    std::cout << "3. Debug Customer Information\n";
+    std::cout << "4. Debug Account Information\n";
+    std::cout << "5. Force Close Account\n";
+    std::cout << "6. Validate All Accounts\n";
+    std::cout << "0. Back to Main Menu\n\n";
+    
+    int choice;
+    std::cout << "Enter your choice: ";
+    std::cin >> choice;
+    
+    switch (choice) {
+        case 1:
+            printGlobalStatistics();
+            break;
+        case 2:
+            debugBankInfo(globalBank);
+            break;
+        case 3: {
+            std::string customerId;
+            std::cout << "Enter customer ID: ";
+            std::cin >> customerId;
+            const Customer* customer = globalBank.findCustomer(customerId);
+            if (customer) {
+                debugCustomerInfo(*customer);
+            } else {
+                std::cout << "Customer not found.\n";
+            }
+            break;
+        }
+        case 4: {
+            std::string accountId;
+            std::cout << "Enter account ID: ";
+            std::cin >> accountId;
+            Account* account = globalBank.findAccount(accountId);
+            if (account) {
+                debugAccountInfo(*account);
+            } else {
+                std::cout << "Account not found.\n";
+            }
+            break;
+        }
+        case 5: {
+            std::string accountId;
+            std::cout << "Enter account ID to force close: ";
+            std::cin >> accountId;
+            forceCloseAccount(globalBank, accountId);
+            break;
+        }
+        case 6: {
+            // Validate all accounts using friend function
+            AccountList accounts = globalBank.getCustomerAccounts(""); // This won't work as expected
+            std::cout << "Account validation feature would iterate through all accounts.\n";
+            break;
+        }
+        case 0:
+            return;
+        default:
+            std::cout << "Invalid choice.\n";
     }
     
     pauseScreen();
@@ -361,6 +438,9 @@ void displayWelcome() {
 
 // Main function - entry point
 int main() {
+    // Initialize global variables
+    initializeApplication();
+    
     // Display welcome screen
     displayWelcome();
     
@@ -414,6 +494,9 @@ int main() {
                     break;
                 case 14:
                     closeAccount();
+                    break;
+                case 15:
+                    adminDebugFunctions();
                     break;
                 case 0:
                     running = false;

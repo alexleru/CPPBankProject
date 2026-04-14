@@ -9,6 +9,9 @@
 // Forward declaration
 class Account;
 
+// Type aliases for better readability
+typedef std::vector<Account*> AccountList;
+
 // Customer class
 class Customer {
 private:
@@ -20,7 +23,7 @@ private:
     std::string address;
     CustomerStatus status;
     time_t registrationDate;
-    std::vector<Account*> accounts;
+    AccountList accounts;
 
 public:
     // Constructor
@@ -60,6 +63,12 @@ public:
     bool validate() const;
     void display() const;
     void displayPortfolio() const;
+
+    // Friend functions for external access to private data
+    friend void debugCustomerInfo(const Customer& customer);
+    friend bool validateCustomerData(const Customer& customer);
+    friend void updateCustomerStatus(Customer& customer, CustomerStatus newStatus);
+    friend AccountList getCustomerAccounts(const Customer& customer);
 
 private:
     // Helper method to generate customer ID

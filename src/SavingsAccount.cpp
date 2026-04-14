@@ -6,15 +6,19 @@
 
 // Constructor - initializes savings account with interest rate
 SavingsAccount::SavingsAccount(double initialBalance, double rate)
-    : Account(AccountType::SAVINGS, initialBalance),
+    : Account(SAVINGS, initialBalance),
       interestRate(rate),
       minimumBalance(MIN_SAVINGS_BALANCE),
       monthsSinceInterestApplied(0) {
 }
 
+// Destructor
+SavingsAccount::~SavingsAccount() {
+}
+
 // Pure virtual implementation - returns account type
 AccountType SavingsAccount::getAccountType() const {
-    return AccountType::SAVINGS;
+    return SAVINGS;
 }
 
 // Monthly processing - applies interest to savings account
@@ -37,11 +41,11 @@ void SavingsAccount::applyInterest() {
     // Only apply if positive
     if (interestAmount > 0) {
         balance += interestAmount;
-        lastModifiedDate = std::time(nullptr);
+        lastModifiedDate = std::time(NULL);
         
         // Record interest transaction
-        Transaction transaction(TransactionType::INTEREST, interestAmount, "Monthly Interest");
-        transaction.setStatus(TransactionStatus::COMPLETED);
+        Transaction transaction(INTEREST, interestAmount, "Monthly Interest");
+        transaction.setStatus(COMPLETED);
         addTransaction(transaction);
         
         std::cout << "Interest applied: " << Utils::formatCurrency(interestAmount) 
@@ -78,10 +82,10 @@ bool SavingsAccount::withdraw(double amount, const std::string& description) {
     
     // Perform withdrawal
     balance -= amount;
-    lastModifiedDate = std::time(nullptr);
+    lastModifiedDate = std::time(NULL);
     
     // Record transaction
-    Transaction transaction(TransactionType::WITHDRAWAL, amount, description);
+    Transaction transaction(WITHDRAWAL, amount, description);
     addTransaction(transaction);
     
     std::cout << "Withdrawal successful! " << Utils::formatCurrency(amount) 

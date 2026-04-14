@@ -8,24 +8,28 @@
 
 // Constructor - initializes loan account
 LoanAccount::LoanAccount(double principal, double rate, int termMonths)
-    : Account(AccountType::LOAN, principal),
+    : Account(LOAN, principal),
       loanAmount(principal),
       loanInterestRate(rate),
       loanTerm(termMonths),
       monthsPaid(0),
-      loanStatus(LoanStatus::PENDING_APPROVAL) {
+      loanStatus(PENDING_APPROVAL) {
     
     // Set account balance to 0 initially (loan amount is principal, not balance)
     balance = 0;
-    loanStatus = LoanStatus::ACTIVE;
+    loanStatus = LOAN_ACTIVE;
     
     // Generate repayment schedule
     generateRepaymentSchedule();
 }
 
+// Destructor
+LoanAccount::~LoanAccount() {
+}
+
 // Pure virtual implementation - returns account type
 AccountType LoanAccount::getAccountType() const {
-    return AccountType::LOAN;
+    return LOAN;
 }
 
 // Monthly processing - updates loan status
@@ -74,12 +78,12 @@ bool LoanAccount::makeEMIPayment(double amount, const std::string& description) 
         throw std::invalid_argument("Payment amount must be positive");
     }
     
-    if (loanStatus == LoanStatus::PAID_OFF) {
+    if (loanStatus == PAID_OFF) {
         throw std::runtime_error("Loan is already fully paid off");
     }
     
     if (monthsPaid >= loanTerm) {
-        loanStatus = LoanStatus::PAID_OFF;
+        loanStatus = PAID_OFF;
         throw std::runtime_error("All payments have been completed");
     }
     
@@ -93,12 +97,12 @@ bool LoanAccount::makeEMIPayment(double amount, const std::string& description) 
         }
         
         // Record transaction
-        Transaction transaction(TransactionType::EMI_PAYMENT, amount, description);
+        Transaction transaction(EMI_PAYMENT, amount, description);
         addTransaction(transaction);
         
         monthsPaid++;
         balance += amount;
-        lastModifiedDate = std::time(nullptr);
+        lastModifiedDate = std::time(NULL);
         
         // Update loan status
         updateLoanStatus();
@@ -148,7 +152,8 @@ void LoanAccount::displayRepaymentSchedule() const {
               << std::setw(18) << "Balance" << std::endl;
     std::cout << "-----------------------------------------------\n";
     
-    for (const auto& payment : repaymentSchedule) {
+    for (size_t i = 0; i < repaymentSchedule.size(); ++i) {
+        const EMIPayment& payment = repaymentSchedule[i];
         std::cout << std::left << std::setw(10) << payment.month
                   << std::setw(18) << Utils::formatCurrency(payment.totalPayment)
                   << std::setw(18) << Utils::formatCurrency(payment.principalPayment)
@@ -191,9 +196,9 @@ LoanStatus LoanAccount::getLoanStatus() const {
 // Update loan status based on payment progress
 void LoanAccount::updateLoanStatus() {
     if (monthsPaid >= loanTerm) {
-        loanStatus = LoanStatus::PAID_OFF;
+        loanStatus = PAID_OFF;
     } else if (monthsPaid > 0) {
-        loanStatus = LoanStatus::ACTIVE;
+        loanStatus = LOAN_ACTIVE;
     }
 }
 
@@ -208,16 +213,16 @@ void LoanAccount::displayAccountInfo() const {
     
     std::string statusStr;
     switch (loanStatus) {
-        case LoanStatus::ACTIVE:
+        case LOAN_ACTIVE:
             statusStr = "Active";
             break;
-        case LoanStatus::PAID_OFF:
+        case PAID_OFF:
             statusStr = "Paid Off";
             break;
-        case LoanStatus::DEFAULTED:
+        case DEFAULTED:
             statusStr = "Defaulted";
             break;
-        case LoanStatus::PENDING_APPROVAL:
+        case PENDING_APPROVAL:
             statusStr = "Pending Approval";
             break;
     }

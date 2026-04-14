@@ -9,7 +9,7 @@
 class Utils {
 public:
     // Delete default constructor to prevent instantiation
-    Utils() = delete;
+    Utils();
 
     // Currency formatting
     static std::string formatCurrency(double amount);

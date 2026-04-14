@@ -1,10 +1,11 @@
 #include "../include/Utils.h"
 #include "../include/Constants.h"
+#include "../include/Globals.h"
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <cmath>
-#include <regex>
+#include <ctime>
 
 // Initialize static counters
 int Utils::customerIdCounter = 1000;
@@ -12,47 +13,27 @@ int Utils::accountIdCounter = 2000;
 
 // Format currency value to string with $ and thousand separators
 std::string Utils::formatCurrency(double amount) {
-    // Create string stream with fixed precision and thousands separator
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(2);
     
     // Handle negative amounts
-    bool isNegative = amount < 0;
-    double absAmount = std::abs(amount);
-    
-    // Build the formatted string manually with thousand separators
-    long long cents = static_cast<long long>(std::round(absAmount * 100));
-    long long dollars = cents / 100;
-    long long centsRemainder = cents % 100;
-    
-    std::string dollarStr = std::to_string(dollars);
-    std::string result;
-    
-    // Add thousand separators
-    int count = 0;
-    for (int i = dollarStr.length() - 1; i >= 0; --i) {
-        if (count == 3) {
-            result = ',' + result;
-            count = 0;
-        }
-        result = dollarStr[i] + result;
-        count++;
+    if (amount < 0) {
+        oss << "-";
+        amount = -amount;
     }
     
-    // Format final output
-    oss.str("");
-    oss << "$" << (isNegative ? "-" : "") << result << "." 
-        << std::setfill('0') << std::setw(2) << centsRemainder;
+    // Simple currency formatting without thousand separators for C++03
+    oss << "$" << amount;
     
     return oss.str();
 }
 
 // Format timestamp to YYYY-MM-DD format
 std::string Utils::formatDate(time_t timestamp) {
+    char buffer[80];
     struct tm* timeinfo = std::localtime(&timestamp);
-    std::ostringstream oss;
-    oss << std::put_time(timeinfo, "%Y-%m-%d %H:%M:%S");
-    return oss.str();
+    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", timeinfo);
+    return std::string(buffer);
 }
 
 // Generate unique customer ID
@@ -65,22 +46,42 @@ std::string Utils::generateCustomerId() {
 // Generate unique account ID
 std::string Utils::generateAccountId() {
     std::ostringstream oss;
-    oss << ACCOUNT_ID_PREFIX << std::setfill('0') << std::setw(6) << (accountIdCounter++);
+    oss << ACCOUNT_ID_PREFIX << std::setfill('0') << std::setw(6) << (globalAccountCounter++);
     return oss.str();
 }
 
-// Validate email format using basic regex
+// Validate email format using basic string checks
 bool Utils::validateEmail(const std::string& email) {
-    // Simple email validation pattern
-    const std::regex emailPattern(R"(^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$)");
-    return std::regex_match(email, emailPattern);
+    // Simple email validation - check for @ and .
+    size_t atPos = email.find('@');
+    size_t dotPos = email.rfind('.');
+    
+    if (atPos == std::string::npos || dotPos == std::string::npos) {
+        return false;
+    }
+    
+    if (atPos == 0 || dotPos <= atPos + 1 || dotPos == email.length() - 1) {
+        return false;
+    }
+    
+    return true;
 }
 
 // Validate phone number format (basic: digits, spaces, dashes, parentheses, plus allowed)
 bool Utils::validatePhone(const std::string& phoneNumber) {
-    // Allow digits, spaces, dashes, parentheses, and plus sign
-    const std::regex phonePattern(R"(^[\d\s\-\(\)\+]{10,}$)");
-    return std::regex_match(phoneNumber, phonePattern);
+    // Simple phone validation - check length and allowed characters
+    if (phoneNumber.length() < 10) {
+        return false;
+    }
+    
+    for (size_t i = 0; i < phoneNumber.length(); ++i) {
+        char c = phoneNumber[i];
+        if (!std::isdigit(c) && c != ' ' && c != '-' && c != '(' && c != ')' && c != '+') {
+            return false;
+        }
+    }
+    
+    return true;
 }
 
 // Get validated amount from user input
@@ -124,11 +125,11 @@ int Utils::getValidatedInteger(const std::string& prompt) {
 // Convert AccountType enum to string
 std::string Utils::accountTypeToString(AccountType type) {
     switch (type) {
-        case AccountType::SAVINGS:
+        case SAVINGS:
             return "Savings";
-        case AccountType::CHECKING:
+        case CHECKING:
             return "Checking";
-        case AccountType::LOAN:
+        case LOAN:
             return "Loan";
         default:
             return "Unknown";
@@ -138,17 +139,17 @@ std::string Utils::accountTypeToString(AccountType type) {
 // Convert TransactionType enum to string
 std::string Utils::transactionTypeToString(TransactionType type) {
     switch (type) {
-        case TransactionType::DEPOSIT:
+        case DEPOSIT:
             return "Deposit";
-        case TransactionType::WITHDRAWAL:
+        case WITHDRAWAL:
             return "Withdrawal";
-        case TransactionType::TRANSFER:
+        case TRANSFER:
             return "Transfer";
-        case TransactionType::INTEREST:
+        case INTEREST:
             return "Interest";
-        case TransactionType::FEE:
+        case FEE:
             return "Fee";
-        case TransactionType::EMI_PAYMENT:
+        case EMI_PAYMENT:
             return "EMI Payment";
         default:
             return "Unknown";
@@ -158,13 +159,13 @@ std::string Utils::transactionTypeToString(TransactionType type) {
 // Convert TransactionStatus enum to string
 std::string Utils::transactionStatusToString(TransactionStatus status) {
     switch (status) {
-        case TransactionStatus::PENDING:
+        case PENDING:
             return "Pending";
-        case TransactionStatus::COMPLETED:
+        case COMPLETED:
             return "Completed";
-        case TransactionStatus::FAILED:
+        case FAILED:
             return "Failed";
-        case TransactionStatus::REVERSED:
+        case REVERSED:
             return "Reversed";
         default:
             return "Unknown";

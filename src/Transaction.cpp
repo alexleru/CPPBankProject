@@ -1,7 +1,9 @@
 #include "../include/Transaction.h"
 #include "../include/Utils.h"
+#include "../include/Globals.h"
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 
 // Initialize static counter
 int Transaction::transactionCounter = 10000;
@@ -11,15 +13,17 @@ Transaction::Transaction(TransactionType type, double amount, const std::string&
     : transactionId(generateTransactionId()),
       type(type),
       amount(amount),
-      timestamp(std::time(nullptr)),
-      status(TransactionStatus::COMPLETED),
+      timestamp(std::time(NULL)),
+      status(COMPLETED),
       description(description) {
+    // Increment global statistics
+    totalTransactionsProcessed++;
 }
 
 // Private method to generate unique transaction ID
 std::string Transaction::generateTransactionId() {
     std::ostringstream oss;
-    oss << "TXN" << std::setfill('0') << std::setw(8) << (transactionCounter++);
+    oss << "TXN" << std::setfill('0') << std::setw(8) << (globalTransactionCounter++);
     return oss.str();
 }
 

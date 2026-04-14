@@ -13,6 +13,11 @@
 Bank::Bank(const std::string& name) : bankName(name) {
 }
 
+// Destructor
+Bank::~Bank() {
+    accountRegistry.clear();
+}
+
 // Register new customer
 bool Bank::registerCustomer(const std::string& firstName, const std::string& lastName,
                            const std::string& email, const std::string& phone,
@@ -46,7 +51,7 @@ Customer* Bank::findCustomer(const std::string& customerId) {
     if (index >= 0) {
         return &customers[index];
     }
-    return nullptr;
+    return NULL;
 }
 
 // Find customer by ID (const version)
@@ -56,7 +61,7 @@ const Customer* Bank::findCustomer(const std::string& customerId) const {
             return &customers[i];
         }
     }
-    return nullptr;
+    return NULL;
 }
 
 // Private helper to find customer index
@@ -87,7 +92,8 @@ void Bank::listAllCustomers() const {
               << std::setw(10) << "Accounts" << std::endl;
     std::cout << "-----------------------------------------------\n";
     
-    for (const auto& customer : customers) {
+    for (size_t i = 0; i < customers.size(); ++i) {
+        const Customer& customer = customers[i];
         std::cout << std::left << std::setw(12) << customer.getCustomerId()
                   << std::setw(20) << (customer.getFirstName() + " " + customer.getLastName())
                   << std::setw(25) << customer.getEmail()
@@ -105,7 +111,7 @@ int Bank::getCustomerCount() const {
 }
 
 // Create new account for customer
-std::shared_ptr<Account> Bank::createAccount(const std::string& customerId,
+Account* Bank::createAccount(const std::string& customerId,
                                             AccountType type, double initialBalance,
                                             double additionalParam) {
     try {
@@ -126,23 +132,23 @@ std::shared_ptr<Account> Bank::createAccount(const std::string& customerId,
         }
         
         // Create appropriate account type
-        std::shared_ptr<Account> newAccount;
+        Account* newAccount = NULL;
         
         switch (type) {
-            case AccountType::SAVINGS: {
+            case SAVINGS: {
                 double rate = (additionalParam > 0) ? additionalParam : SAVINGS_INTEREST_RATE;
-                newAccount = std::make_shared<SavingsAccount>(initialBalance, rate);
+                newAccount = new SavingsAccount(initialBalance, rate);
                 break;
             }
-            case AccountType::CHECKING: {
+            case CHECKING: {
                 double overdraft = (additionalParam > 0) ? additionalParam : OVERDRAFT_LIMIT;
-                newAccount = std::make_shared<CheckingAccount>(initialBalance, overdraft);
+                newAccount = new CheckingAccount(initialBalance, overdraft);
                 break;
             }
-            case AccountType::LOAN: {
+            case LOAN: {
                 double rate = (additionalParam > 0) ? additionalParam : LOAN_INTEREST_RATE;
                 int term = 12; // Default 12 months
-                newAccount = std::make_shared<LoanAccount>(initialBalance, rate, term);
+                newAccount = new LoanAccount(initialBalance, rate, term);
                 break;
             }
             default:
@@ -163,17 +169,17 @@ std::shared_ptr<Account> Bank::createAccount(const std::string& customerId,
         
     } catch (const std::exception& e) {
         std::cerr << "Error creating account: " << e.what() << std::endl;
-        return nullptr;
+        return NULL;
     }
 }
 
 // Find account by ID
-std::shared_ptr<Account> Bank::findAccount(const std::string& accountId) const {
-    auto it = accountRegistry.find(accountId);
+Account* Bank::findAccount(const std::string& accountId) const {
+    AccountRegistry::const_iterator it = accountRegistry.find(accountId);
     if (it != accountRegistry.end()) {
         return it->second;
     }
-    return nullptr;
+    return NULL;
 }
 
 // Search and display customer's accounts
@@ -188,8 +194,8 @@ void Bank::searchAccounts(const std::string& customerId) const {
 }
 
 // Get all accounts for a customer
-std::vector<std::shared_ptr<Account>> Bank::getCustomerAccounts(const std::string& customerId) const {
-    std::vector<std::shared_ptr<Account>> result;
+AccountList Bank::getCustomerAccounts(const std::string& customerId) const {
+    AccountList result;
     
     const Customer* customer = findCustomer(customerId);
     if (!customer) {
@@ -197,7 +203,7 @@ std::vector<std::shared_ptr<Account>> Bank::getCustomerAccounts(const std::strin
     }
     
     for (int i = 0; i < customer->getAccountCount(); ++i) {
-        auto account = customer->getAccount(i);
+        Account* account = customer->getAccount(i);
         if (account) {
             result.push_back(account);
         }
@@ -225,8 +231,8 @@ void Bank::listAllAccounts() const {
     
     double totalBalance = 0.0;
     
-    for (const auto& pair : accountRegistry) {
-        const auto& account = pair.second;
+    for (AccountRegistry::const_iterator it = accountRegistry.begin(); it != accountRegistry.end(); ++it) {
+        Account* account = it->second;
         if (account) {
             std::cout << std::left << std::setw(12) << account->getAccountId()
                       << std::setw(12) << Utils::accountTypeToString(account->getAccountType())
@@ -244,7 +250,7 @@ void Bank::listAllAccounts() const {
 // Deposit to account
 bool Bank::depositToAccount(const std::string& accountId, double amount) {
     try {
-        auto account = findAccount(accountId);
+        Account* account = findAccount(accountId);
         if (!account) {
             throw std::runtime_error("Account not found");
         }
@@ -261,7 +267,7 @@ bool Bank::depositToAccount(const std::string& accountId, double amount) {
 // Withdraw from account
 bool Bank::withdrawFromAccount(const std::string& accountId, double amount) {
     try {
-        auto account = findAccount(accountId);
+        Account* account = findAccount(accountId);
         if (!account) {
             throw std::runtime_error("Account not found");
         }
@@ -278,8 +284,8 @@ bool Bank::withdrawFromAccount(const std::string& accountId, double amount) {
 bool Bank::transferBetweenAccounts(const std::string& fromAccountId,
                                   const std::string& toAccountId, double amount) {
     try {
-        auto fromAccount = findAccount(fromAccountId);
-        auto toAccount = findAccount(toAccountId);
+        Account* fromAccount = findAccount(fromAccountId);
+        Account* toAccount = findAccount(toAccountId);
         
         if (!fromAccount || !toAccount) {
             throw std::runtime_error("One or both accounts not found");
@@ -324,14 +330,15 @@ void Bank::generateBankReport() const {
     std::cout << "===============================================\n";
     std::cout << "BANK REPORT - " << bankName << "\n";
     std::cout << "===============================================\n";
-    std::cout << "Report Generated: " << Utils::formatDate(std::time(nullptr)) << std::endl;
+    std::cout << "Report Generated: " << Utils::formatDate(std::time(NULL)) << std::endl;
     std::cout << "Total Customers: " << customers.size() << std::endl;
     std::cout << "Total Accounts: " << accountRegistry.size() << std::endl;
     
     double totalBalance = 0.0;
-    for (const auto& pair : accountRegistry) {
-        if (pair.second) {
-            totalBalance += pair.second->getBalance();
+    for (AccountRegistry::const_iterator it = accountRegistry.begin(); it != accountRegistry.end(); ++it) {
+        Account* account = it->second;
+        if (account) {
+            totalBalance += account->getBalance();
         }
     }
     
@@ -343,9 +350,10 @@ void Bank::generateBankReport() const {
 void Bank::applyMonthlyProcessing() {
     std::cout << "\nApplying monthly processing to all accounts...\n";
     
-    for (auto& pair : accountRegistry) {
-        if (pair.second) {
-            pair.second->applyMonthlyProcessing();
+    for (AccountRegistry::iterator it = accountRegistry.begin(); it != accountRegistry.end(); ++it) {
+        Account* account = it->second;
+        if (account) {
+            account->applyMonthlyProcessing();
         }
     }
     
@@ -354,7 +362,7 @@ void Bank::applyMonthlyProcessing() {
 
 // Display account statement
 void Bank::displayAccountStatement(const std::string& accountId) const {
-    auto account = findAccount(accountId);
+    Account* account = findAccount(accountId);
     if (!account) {
         std::cerr << "Account not found\n";
         return;
@@ -382,4 +390,36 @@ void Bank::displayBankInfo() const {
     std::cout << "Total Customers: " << customers.size() << std::endl;
     std::cout << "Total Accounts: " << accountRegistry.size() << std::endl;
     std::cout << "===============================================\n";
+}
+
+// Friend function implementations
+
+// Debug function to access private bank information
+void debugBankInfo(const Bank& bank) {
+    std::cout << "\n=== DEBUG BANK INFO ===\n";
+    std::cout << "Bank Name: " << bank.bankName << std::endl;
+    std::cout << "Customer Count: " << bank.customers.size() << std::endl;
+    std::cout << "Account Registry Size: " << bank.accountRegistry.size() << std::endl;
+    std::cout << "=======================\n";
+}
+
+// Friend function to get all customers
+CustomerList getAllCustomers(const Bank& bank) {
+    return bank.customers;
+}
+
+// Friend function to get account registry
+AccountRegistry getAccountRegistry(const Bank& bank) {
+    return bank.accountRegistry;
+}
+
+// Friend function to force close an account (administrative function)
+void forceCloseAccount(Bank& bank, const std::string& accountId) {
+    AccountRegistry::iterator it = bank.accountRegistry.find(accountId);
+    if (it != bank.accountRegistry.end() && it->second) {
+        it->second->setIsActive(false);
+        std::cout << "Account " << accountId << " has been forcibly closed.\n";
+    } else {
+        std::cerr << "Account " << accountId << " not found.\n";
+    }
 }

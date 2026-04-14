@@ -2,59 +2,44 @@
 #define ENUMS_H
 
 // Account type enumeration
-namespace AccountTypeEnum {
-    enum AccountType {
-        SAVINGS,
-        CHECKING,
-        LOAN
-    };
-}
-typedef AccountTypeEnum::AccountType AccountType;
+enum AccountType {
+    SAVINGS,
+    CHECKING,
+    LOAN
+};
 
 // Transaction type enumeration
-namespace TransactionTypeEnum {
-    enum TransactionType {
-        DEPOSIT,
-        WITHDRAWAL,
-        TRANSFER,
-        INTEREST,
-        FEE,
-        EMI_PAYMENT
-    };
-}
-typedef TransactionTypeEnum::TransactionType TransactionType;
+enum TransactionType {
+    DEPOSIT,
+    WITHDRAWAL,
+    TRANSFER,
+    INTEREST,
+    FEE,
+    EMI_PAYMENT
+};
 
 // Transaction status enumeration
-namespace TransactionStatusEnum {
-    enum TransactionStatus {
-        PENDING,
-        COMPLETED,
-        FAILED,
-        REVERSED
-    };
-}
-typedef TransactionStatusEnum::TransactionStatus TransactionStatus;
+enum TransactionStatus {
+    PENDING,
+    COMPLETED,
+    FAILED,
+    REVERSED
+};
 
 // Customer status enumeration
-namespace CustomerStatusEnum {
-    enum CustomerStatus {
-        ACTIVE,
-        INACTIVE,
-        SUSPENDED,
-        CLOSED
-    };
-}
-typedef CustomerStatusEnum::CustomerStatus CustomerStatus;
+enum CustomerStatus {
+    ACTIVE,
+    INACTIVE,
+    SUSPENDED,
+    CLOSED
+};
 
 // Loan status enumeration
-namespace LoanStatusEnum {
-    enum LoanStatus {
-        ACTIVE,
-        PAID_OFF,
-        DEFAULTED,
-        PENDING_APPROVAL
-    };
-}
-typedef LoanStatusEnum::LoanStatus LoanStatus;
+enum LoanStatus {
+    LOAN_ACTIVE,
+    PAID_OFF,
+    DEFAULTED,
+    PENDING_APPROVAL
+};
 
 #endif // ENUMS_H

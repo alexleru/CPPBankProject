@@ -51,7 +51,7 @@ public:
     LoanStatus getLoanStatus() const;
 
     // Display
-    void displayAccountInfo() const override;
+    void displayAccountInfo() const;
 
 private:
     // Helper to update loan status
