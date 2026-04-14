@@ -2,7 +2,6 @@
 #define GLOBALS_H
 
 extern int globalCustomerCounter;
-extern int globalAccountCounter;
 
 void initializeGlobals();
 

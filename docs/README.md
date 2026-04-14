@@ -1,6 +1,6 @@
-# Bank Account Management System in C++
+# Bank Customer Management System in C++
 
-A C++ project implementing a small bank account management system with support for multiple account types and customer management.
+A small C++ project implementing a bank customer management system with registration, validation, and listing.
 
 ## Project Structure
 
@@ -12,20 +12,12 @@ CPPBankProject/
 │   ├── Globals.h                    # Global variables and counters
 │   ├── Utils.h                      # Utility class declarations
 │   ├── Customer.h                   # Customer class
-│   ├── Account.h                    # Abstract base Account class
-│   ├── SavingsAccount.h             # Savings Account derived class
-│   ├── CheckingAccount.h            # Checking Account derived class
-│   ├── LoanAccount.h                # Loan Account derived class
 │   └── Bank.h                       # Bank management class
 ├── src/                             # Implementation files
 │   ├── main.cpp                     # Entry point with interactive menu
 │   ├── Globals.cpp                  # Global variable definitions
 │   ├── Utils.cpp                    # Utility function implementations
 │   ├── Customer.cpp                 # Customer class implementation
-│   ├── Account.cpp                  # Base Account class implementation
-│   ├── SavingsAccount.cpp           # Savings Account implementation
-│   ├── CheckingAccount.cpp          # Checking Account implementation
-│   ├── LoanAccount.cpp              # Loan Account implementation
 │   └── Bank.cpp                     # Bank logic implementation
 ├── docs/                            # Documentation
 │   └── README.md                    # This file
@@ -38,60 +30,43 @@ CPPBankProject/
 ## Technical Features
 
 ### Object-Oriented Design
-- **Abstract Base Class**: `Account` with pure virtual methods
-- **Inheritance Hierarchy**: SavingsAccount, CheckingAccount, LoanAccount inherit from Account
-- **Polymorphism**: Accounts use virtual methods for type-specific behavior
-- **Memory Management**: Raw pointers with manual cleanup in destructors
+- **Encapsulation**: Private member variables with public accessors
+- **Validation**: Input validation on customer registration
+- **Memory Management**: Raw pointers with manual cleanup in destructor
 
 ### Data Structures
-- **Vectors**: For storing customers (`typedef std::vector<...>`)
-- **Maps**: Fast account lookup by ID (`typedef std::map<std::string, Account*>`)
+- **Vectors**: For storing customers (`std::vector<Customer*>`)
 - **Strings**: All data uses `std::string` for cross-platform compatibility
 - **Global State**: Shared counters and configuration via `Globals.h`
 
 ### Key Classes
 
-#### Account (Abstract Base)
-- Pure virtual method: `getAccountType()`
-- Virtual `display()` method
-- Balance management
-
-#### SavingsAccount
-- Stores interest rate (3.5% default)
-- Inherits from Account
-
-#### CheckingAccount
-- Supports overdraft limit ($500 default)
-- Inherits from Account
-
-#### LoanAccount
-- Principal-based balance tracking
-- Stores interest rate (8% default) and term in months
-- Inherits from Account
-
 #### Customer
 - Stores personal info (name, email, phone, address)
-- Tracks status (ACTIVE / INACTIVE)
-- Can hold up to 5 accounts
+- Tracks status (`ACTIVE` / `INACTIVE`)
+- ID auto-generated via `Utils::generateCustomerId()`
 - Email and phone validation on `validate()`
 
 #### Bank
-- Customer management and registration
-- Account creation and lookup via `accountRegistry`
-- List customers
+- Owns a `std::vector<Customer*>` (destructor frees all)
+- `registerCustomer()` — validates and adds a customer
+- `listCustomers()` — prints all registered customers
+- `getBankName()` — returns the bank name
+
+#### Utils (static methods only)
+- `generateCustomerId()` — generates unique `CUST` + 6-digit ID
+- `validateEmail()` — checks `@` and domain with TLD
+- `validatePhone()` — checks minimum 10 characters, digits/symbols only
 
 ### Static Methods
 ```cpp
-Utils::generateCustomerId()     // Unique customer ID (CUST + 6 digits)
-Utils::generateAccountId()      // Unique account ID (ACC + 6 digits)
-Utils::validateEmail()          // Email format validation
-Utils::validatePhone()          // Phone format validation
-Utils::accountTypeToString()    // Convert AccountType enum to string
+Utils::generateCustomerId()   // "CUST001000", "CUST001001", ...
+Utils::validateEmail()        // Email format check
+Utils::validatePhone()        // Phone format check (min 10 chars)
 ```
 
-### Enums (2 total, C++03 plain enums)
+### Enums (1 total, C++03 plain enum)
 ```cpp
-enum AccountType    { SAVINGS, CHECKING, LOAN }
 enum CustomerStatus { ACTIVE, INACTIVE }
 ```
 
@@ -110,8 +85,7 @@ cd CPPBankProject
 g++ -std=c++03 -I./include \
     -o BankSystem \
     src/main.cpp src/Utils.cpp src/Customer.cpp \
-    src/Account.cpp src/SavingsAccount.cpp src/CheckingAccount.cpp \
-    src/LoanAccount.cpp src/Globals.cpp src/Bank.cpp
+    src/Globals.cpp src/Bank.cpp
 ./BankSystem
 ```
 
@@ -123,38 +97,36 @@ g++ -std=c++03 -I./include \
 - Linux (GCC)
 - Windows (MinGW)
 - macOS (Clang)
-- Uses cross-platform standard headers only: `<iostream>`, `<string>`, `<vector>`, `<map>`, etc.
+- Uses standard headers only: `<iostream>`, `<string>`, `<vector>`, etc.
 
-## Features & Menus
+## Features & Menu
 
 ### Main Menu Options
+```
 1. Create Customer
-2. Create Account (Savings/Checking/Loan)
-3. List Customers
-4. Exit
+2. List Customers
+3. Exit
+```
 
 ### Core Functionality
 
 #### Customer Management
-- Register customers with email and phone validation
-- Track customer status (Active, Inactive)
-- Support multiple accounts per customer (max 5)
-
-#### Account Creation
-- Savings account with configurable interest rate
-- Checking account with configurable overdraft limit
-- Loan account with configurable principal, rate, and term
+- Register customers with first name, last name, email, phone, address
+- Email and phone validation on registration
+- Auto-generated unique customer ID (`CUST001000`, `CUST001001`, ...)
+- List all registered customers with their details and status
 
 ## Code Statistics
 
-- **Total Files**: 19 (10 headers + 9 sources)
+- **Total Files**: 11 (6 headers + 5 sources)
+- **Total Lines**: ~278
 - **C++ Standard**: C++03
 
 ## Design Patterns
 
-- **Polymorphism**: Treating different accounts through base class interface
 - **Encapsulation**: Private member variables with public accessors
-- **Separation of Concerns**: Utils, Bank, Customer, Account classes with distinct responsibilities
+- **Separation of Concerns**: Utils, Bank, Customer classes with distinct responsibilities
+- **Static Utility Class**: `Utils` with private constructor — not instantiable
 
 ## Usage Example
 
@@ -162,14 +134,12 @@ g++ -std=c++03 -I./include \
 // Create bank
 Bank bank("Small Bank System");
 
-// Register customer
+// Register a customer
 std::string customerId, errorMsg;
-bank.registerCustomer("John", "Doe", "john@example.com", "123-456-7890", "123 Main St",
-                      customerId, errorMsg);
-
-// Create savings account for customer
-std::string err;
-Account* account = bank.createAccount(customerId, SAVINGS, 1000.0, 0.0, err);
+if (bank.registerCustomer("John", "Doe", "john@example.com",
+                          "123-456-7890", "123 Main St",
+                          customerId, errorMsg))
+    std::cout << "ID: " << customerId << "\n"; // CUST001000
 
 // List all customers
 bank.listCustomers();
@@ -184,25 +154,23 @@ bank.listCustomers();
 
 ## Notes
 
-- All currency values are stored as `double`
 - Constants defined as typed `const` variables in `Constants.h` (not `#define`)
-- Global counters managed through `Globals.h` / `Globals.cpp`
+- Global counter managed through `Globals.h` / `Globals.cpp`
 - No external dependencies (pure C++ Standard Library)
-- Uses `typedef` for type aliases (C++03 compatible, no `using` aliases)
+- Uses raw pointers with manual memory management (C++03 style)
 
 ## Learning Objectives
 
 This project demonstrates:
 - Object-Oriented Programming (OOP) principles
-- Inheritance and polymorphism
-- STL containers (vector, map, string)
-- C++03 compatible patterns (raw pointers, plain enums, typedef)
-- Console I/O
-- Input validation
+- Encapsulation and class design
+- STL containers (`vector`, `string`)
+- C++03 compatible patterns (raw pointers, plain enums)
+- Console I/O and input validation
 
 ---
 
-**Version**: 1.0.0
+**Version**: 2.0.0
 **Date**: April 2026
 **Standard**: C++03
 **Platform**: Cross-Platform (Windows/Linux/macOS)

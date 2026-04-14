@@ -14,10 +14,6 @@ BUILD_DIR = build
 SOURCES = $(SRC_DIR)/main.cpp \
           $(SRC_DIR)/Utils.cpp \
           $(SRC_DIR)/Customer.cpp \
-          $(SRC_DIR)/Account.cpp \
-          $(SRC_DIR)/SavingsAccount.cpp \
-          $(SRC_DIR)/CheckingAccount.cpp \
-          $(SRC_DIR)/LoanAccount.cpp \
           $(SRC_DIR)/Globals.cpp \
           $(SRC_DIR)/Bank.cpp
 

@@ -1,7 +1,7 @@
-# Bank Account Management System - Test Cases
+# Bank Customer Management System - Test Cases
 
 ## Overview
-Test cases for the Bank Account Management System covering customer registration, account creation, and input validation.
+Test cases for the Bank Customer Management System covering customer registration, listing, and input validation.
 
 ---
 
@@ -19,7 +19,7 @@ Test cases for the Bank Account Management System covering customer registration
 | Phone | 123-456-7890 |
 | Address | 123 Main Street |
 
-**Expected Result**: Customer registered successfully. Output includes unique Customer ID (e.g. `CUST000001`).
+**Expected Result**: Customer registered successfully. Output includes unique Customer ID (e.g. `CUST001000`).
 **Status**: PASS
 
 ---
@@ -60,7 +60,7 @@ Test cases for the Bank Account Management System covering customer registration
 | Bob Wilson | bob@bank.com | (555) 123-4567 |
 | Carol Davis | carol@bank.com | 555-987-6543 |
 
-**Expected Result**: Each customer gets a unique, incrementing ID (CUST000001, CUST000002, CUST000003).
+**Expected Result**: Each customer gets a unique, incrementing ID (CUST001000, CUST001001, CUST001002).
 **Status**: PASS
 
 ---
@@ -69,115 +69,69 @@ Test cases for the Bank Account Management System covering customer registration
 **Priority**: Medium
 **Objective**: Verify that blank first or last name is rejected
 
-**Input**: Leave first name or last name empty.
+**Input**: Leave first name or last name empty (press Enter).
 **Expected Result**: Registration fails with a validation error.
 **Status**: PENDING
 
 ---
 
-## Test Section 2: Account Creation
-
-### TC-2.1: Create Savings Account
-**Priority**: High
-**Objective**: Verify savings account creation
-
-| Parameter | Value |
-|-----------|-------|
-| Customer ID | CUST000001 |
-| Account Type | 1 (Savings) |
-| Initial Balance | $1,000.00 |
-
-**Expected Result**: Account created. Output shows Account ID (e.g. `ACC000001`) and type "Savings".
-**Status**: PASS
-
----
-
-### TC-2.2: Create Checking Account
-**Priority**: High
-**Objective**: Verify checking account creation
-
-| Parameter | Value |
-|-----------|-------|
-| Customer ID | CUST000001 |
-| Account Type | 2 (Checking) |
-| Initial Balance | $500.00 |
-
-**Expected Result**: Account created. Output shows Account ID and type "Checking".
-**Status**: PENDING
-
----
-
-### TC-2.3: Create Loan Account
-**Priority**: High
-**Objective**: Verify loan account creation
-
-| Parameter | Value |
-|-----------|-------|
-| Customer ID | CUST000002 |
-| Account Type | 3 (Loan) |
-| Initial Balance | $10,000.00 |
-
-**Expected Result**: Account created. Output shows Account ID and type "Loan".
-**Status**: PENDING
-
----
-
-### TC-2.4: Maximum Accounts per Customer
+### TC-1.6: Empty Address Field
 **Priority**: Medium
-**Objective**: Verify `MAX_ACCOUNTS_PER_CUSTOMER` (5) is enforced
+**Objective**: Verify that blank address is rejected
 
-**Input**: Attempt to create a 6th account for a single customer.
-**Expected Result**: Creation fails with an error message; no 6th account is added.
+**Input**: Leave address empty (press Enter).
+**Expected Result**: Registration fails with a validation error.
 **Status**: PENDING
 
 ---
 
-### TC-2.5: Create Account for Non-Existent Customer
-**Priority**: High
-**Objective**: Verify that an invalid customer ID is rejected
+## Test Section 2: List Customers
 
-**Input**: Customer ID that does not exist (e.g. `CUST999999`).
-**Expected Result**: Account creation fails with "Customer not found" error.
-**Status**: PENDING
-
----
-
-## Test Section 3: List Customers
-
-### TC-3.1: List Customers — Empty Bank
+### TC-2.1: List Customers — Empty Bank
 **Priority**: Medium
 **Objective**: Verify graceful output when no customers registered
 
-**Input**: Menu option 3 before any customers are added.
-**Expected Result**: Output indicates no customers are registered (no crash).
+**Input**: Menu option 2 before any customers are added.
+**Expected Result**: Output displays "No customers registered." without crashing.
 **Status**: PENDING
 
 ---
 
-### TC-3.2: List Customers — After Registration
+### TC-2.2: List Customers — After Registration
 **Priority**: Medium
 **Objective**: Verify all registered customers appear in listing
 
 **Setup**: Register at least 2 customers.
-**Input**: Menu option 3.
-**Expected Result**: All registered customers displayed with their IDs, names, and status.
+**Input**: Menu option 2.
+**Expected Result**: All registered customers displayed with their IDs, names, email, phone, address, and status.
 **Status**: PENDING
 
 ---
 
-## Test Section 4: Input Validation (Menu)
+### TC-2.3: Customer Status Displayed as "Active"
+**Priority**: Low
+**Objective**: Verify new customers show status "Active"
 
-### TC-4.1: Invalid Menu Choice (Out of Range)
+**Setup**: Register one customer.
+**Input**: Menu option 2.
+**Expected Result**: Customer status is displayed as `Active`.
+**Status**: PENDING
+
+---
+
+## Test Section 3: Input Validation (Menu)
+
+### TC-3.1: Invalid Menu Choice (Out of Range)
 **Priority**: Medium
 **Objective**: Verify that out-of-range menu numbers are rejected
 
-**Input**: Enter `9` at the main menu (valid range 1–4).
+**Input**: Enter `9` at the main menu (valid range 1–3).
 **Expected Result**: User is prompted to re-enter; program does not crash.
 **Status**: PENDING
 
 ---
 
-### TC-4.2: Non-Numeric Menu Input
+### TC-3.2: Non-Numeric Menu Input
 **Priority**: Medium
 **Objective**: Verify that text input at numeric prompts is rejected
 
@@ -187,12 +141,12 @@ Test cases for the Bank Account Management System covering customer registration
 
 ---
 
-### TC-4.3: Negative Amount at Account Creation
-**Priority**: Medium
-**Objective**: Verify that negative initial balance is rejected
+### TC-3.3: Exit via Option 3
+**Priority**: High
+**Objective**: Verify clean program exit
 
-**Input**: Enter `-500` when prompted for initial balance.
-**Expected Result**: User is prompted to re-enter a non-negative number.
+**Input**: Enter `3` at the main menu.
+**Expected Result**: Output shows `Goodbye.` and program exits with code 0.
 **Status**: PENDING
 
 ---
@@ -201,8 +155,7 @@ Test cases for the Bank Account Management System covering customer registration
 
 | Section | Total Cases | Passing |
 |---------|-------------|---------|
-| Customer Registration | 5 | 4 |
-| Account Creation | 5 | 1 |
-| List Customers | 2 | 0 |
+| Customer Registration | 6 | 4 |
+| List Customers | 3 | 0 |
 | Input Validation | 3 | 0 |
-| **Total** | **15** | **5** |
+| **Total** | **12** | **4** |

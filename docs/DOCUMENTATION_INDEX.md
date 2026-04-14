@@ -1,15 +1,15 @@
-# Documentation Index - Bank Account Management System
+# Documentation Index - Bank Customer Management System
 
 ## Documentation Files
 
 ### 1. README.md
 **Purpose**: Project overview and general information
 **Contents**:
-- Project structure (19 files: 10 headers + 9 sources)
+- Project structure (11 files: 6 headers + 5 sources)
 - Technical features and OOP design
-- Key classes and relationships
+- Key classes and relationships (`Bank`, `Customer`, `Utils`)
 - Compilation instructions
-- Feature list and menu options
+- Feature list and 3-option menu
 - Usage examples
 
 **When to use**: First-time setup, understanding architecture
@@ -19,8 +19,8 @@
 ### 2. QUICK_REFERENCE.md
 **Purpose**: Quick lookup and reference information
 **Contents**:
-- Menu options (4 options)
-- Account type comparison
+- Menu options (3 options)
+- Customer field requirements
 - Validation rules (email, phone)
 - Constants from `Constants.h`
 - Static methods reference
@@ -33,7 +33,7 @@
 
 ### 3. TEST_CASES.md
 **Purpose**: Test case documentation
-**Contents**: Test cases organized by feature (customer registration, account creation, validation)
+**Contents**: Test cases organized by feature (customer registration, listing, validation)
 
 **When to use**: Quality assurance, regression testing
 
@@ -41,7 +41,7 @@
 
 ### 4. TESTING_GUIDE.md
 **Purpose**: Practical testing guidance
-**Contents**: Test scenarios, manual test procedures, input sequences
+**Contents**: Test scenarios with input sequences, manual test checklist
 
 **When to use**: Running tests, debugging
 
@@ -57,14 +57,13 @@
 - ...look up a constant? → QUICK_REFERENCE.md (Constants)
 
 ### "What is...?"
-- ...the max accounts per customer? → QUICK_REFERENCE.md (Constants: `MAX_ACCOUNTS_PER_CUSTOMER`)
-- ...the default overdraft limit? → QUICK_REFERENCE.md (Constants: `OVERDRAFT_LIMIT`)
-- ...the account types? → QUICK_REFERENCE.md (Account Types)
+- ...the customer ID format? → QUICK_REFERENCE.md (Customer ID Format)
+- ...the validation rules? → QUICK_REFERENCE.md (Validation Rules)
 - ...an enum value? → QUICK_REFERENCE.md (Enums)
 
 ### "Test Case for..."
 - ...customer registration → TEST_CASES.md (Section 1)
-- ...account creation → TEST_CASES.md (Section 2)
+- ...listing customers → TEST_CASES.md (Section 2)
 - ...input validation → TEST_CASES.md (Section 3)
 
 ---
@@ -84,7 +83,7 @@
 ### For First-Time Users:
 1. `README.md` — Overview
 2. `QUICK_REFERENCE.md` — Menu and features
-3. `TESTING_GUIDE.md` — Try the demo
+3. `TESTING_GUIDE.md` — Try Scenario A
 
 ### For Developers:
 1. `README.md` — Architecture section

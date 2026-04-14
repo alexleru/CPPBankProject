@@ -1,6 +1,6 @@
 # START HERE - Documentation Guide
 
-Welcome to the **Bank Account Management System** documentation.
+Welcome to the **Bank Customer Management System** documentation.
 
 ---
 
@@ -27,7 +27,7 @@ Welcome to the **Bank Account Management System** documentation.
 ### 4. **TESTING_GUIDE.md**
    How to execute tests
    - Manual test procedures
-   - Automated test scenarios
+   - Test scenarios with input sequences
 
 ---
 
@@ -67,9 +67,8 @@ make
 ### Step 3: Try the menu (3 min)
 ```
 1 → Create a customer
-2 → Create an account for that customer
-3 → List all customers
-4 → Exit
+2 → List all customers
+3 → Exit
 ```
 
 ---

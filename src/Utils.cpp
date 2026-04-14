@@ -12,12 +12,6 @@ std::string Utils::generateCustomerId() {
     return oss.str();
 }
 
-std::string Utils::generateAccountId() {
-    std::ostringstream oss;
-    oss << ACCOUNT_ID_PREFIX << std::setfill('0') << std::setw(6) << globalAccountCounter++;
-    return oss.str();
-}
-
 bool Utils::validateEmail(const std::string& email) {
     size_t at  = email.find('@');
     size_t dot = email.rfind('.');
@@ -34,13 +28,4 @@ bool Utils::validatePhone(const std::string& phone) {
             return false;
     }
     return true;
-}
-
-std::string Utils::accountTypeToString(AccountType type) {
-    switch (type) {
-        case SAVINGS:  return "Savings";
-        case CHECKING: return "Checking";
-        case LOAN:     return "Loan";
-        default:       return "Unknown";
-    }
 }

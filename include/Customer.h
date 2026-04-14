@@ -2,8 +2,6 @@
 #define CUSTOMER_H
 
 #include <string>
-#include <vector>
-#include "Account.h"
 #include "Enums.h"
 
 class Customer {
@@ -15,13 +13,11 @@ private:
     std::string phone;
     std::string address;
     CustomerStatus status;
-    std::vector<Account*> accounts;
 
 public:
     Customer(const std::string& firstName, const std::string& lastName,
              const std::string& email, const std::string& phone,
              const std::string& address);
-    ~Customer();
 
     std::string getCustomerId() const;
     std::string getFirstName()  const;
@@ -30,10 +26,7 @@ public:
     std::string getPhone()      const;
     std::string getAddress()    const;
     CustomerStatus getStatus()  const;
-    int getAccountCount()       const;
 
-    bool canAddAccount() const;
-    bool addAccount(Account* account);
     bool validate(std::string& errorMsg) const;
     void display() const;
 };
