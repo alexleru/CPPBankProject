@@ -2,7 +2,7 @@
 
 # Compiler settings
 CXX = g++
-CXXFLAGS = -std=c++03 -Wall -Wextra -pedantic -I./include
+CXXFLAGS = -std=c++03 -I./include
 LDFLAGS =
 
 # Directories
