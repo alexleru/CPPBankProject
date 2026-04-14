@@ -2,13 +2,14 @@
 
 A comprehensive, production-style C++ project implementing a complete bank account management system with support for multiple account types, customer management, and transaction processing.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 CPPBankProject/
 ├── include/                          # Header files
 │   ├── Constants.h                  # #define macros and constants
 │   ├── Enums.h                      # All enumeration types
+│   ├── Globals.h                    # Global variables and counters
 │   ├── Utils.h                      # Utility class declarations
 │   ├── Customer.h                   # Customer class
 │   ├── Transaction.h                # Transaction class
@@ -19,6 +20,7 @@ CPPBankProject/
 │   └── Bank.h                       # Bank management class
 ├── src/                             # Implementation files
 │   ├── main.cpp                     # Entry point with interactive menu
+│   ├── Globals.cpp                  # Global variable definitions
 │   ├── Utils.cpp                    # Utility function implementations
 │   ├── Customer.cpp                 # Customer class implementation
 │   ├── Transaction.cpp              # Transaction class implementation
@@ -27,25 +29,32 @@ CPPBankProject/
 │   ├── CheckingAccount.cpp          # Checking Account implementation
 │   ├── LoanAccount.cpp              # Loan Account implementation
 │   └── Bank.cpp                     # Bank logic implementation
+├── docs/                            # Documentation
+│   ├── README.md                    # This file
+│   ├── DOCUMENTATION_INDEX.md       # Index of all documentation
+│   ├── QUICK_REFERENCE.md           # Quick reference card
+│   ├── START_HERE.md                # Getting started guide
+│   ├── TEST_CASES.md                # Test case descriptions
+│   └── TESTING_GUIDE.md             # Testing instructions
 ├── build/                           # Build artifacts (created by make)
-│   ├── *.o                         # Object files
-│   └── BankSystem                  # Executable (also in root)
-├── Makefile                         # Build configuration
-└── README.md                        # This file
+│   └── *.o                         # Object files
+├── BankSystem                       # Compiled executable
+└── Makefile                         # Build configuration
 ```
 
-## ⚙️ Technical Features
+## Technical Features
 
 ### Object-Oriented Design
 - **Abstract Base Class**: `Account` with pure virtual methods
 - **Inheritance Hierarchy**: SavingsAccount, CheckingAccount, LoanAccount inherit from Account
 - **Polymorphism**: Accounts use virtual methods for type-specific behavior
-- **Memory Management**: Smart pointers (`std::shared_ptr`) for automatic memory management
+- **Memory Management**: Raw pointers with manual cleanup in destructors
 
 ### Data Structures
-- **Vectors**: For storing customers and transaction history
-- **Maps**: Fast account lookup by ID
+- **Vectors**: For storing customers and transaction history (`typedef std::vector<...>`)
+- **Maps**: Fast account lookup by ID (`typedef std::map<std::string, Account*>`)
 - **Strings**: All data uses `std::string` for cross-platform compatibility
+- **Global State**: Shared counters and configuration via `Globals.h`
 
 ### Key Classes
 
@@ -53,6 +62,7 @@ CPPBankProject/
 - Pure virtual methods: `getAccountType()`, `applyMonthlyProcessing()`
 - Transaction history tracking
 - Balance management and validation
+- Friend functions for privileged external access
 
 #### SavingsAccount
 - Enforces minimum balance requirement ($100)
@@ -73,14 +83,14 @@ CPPBankProject/
 
 #### Bank
 - Customer management and registration
-- Account creation and lookups
+- Account creation and lookups via `AccountRegistry`
 - Transaction processing (deposits, withdrawals, transfers)
 - Monthly processing (interest, fees)
 - Reporting and analytics
 
 ### Static Methods (8 total)
 ```cpp
-Utils::formatCurrency()         // Format: $1,234.56
+Utils::formatCurrency()         // Format: $1234.56
 Utils::formatDate()             // Format: YYYY-MM-DD HH:MM:SS
 Utils::generateCustomerId()     // Unique customer ID
 Utils::generateAccountId()      // Unique account ID
@@ -90,16 +100,16 @@ LoanAccount::calculateEMI()     // EMI calculation
 Account::getInterestForType()   // Type-based interest rate
 ```
 
-### Enums (5 total)
+### Enums (5 total, C++03 plain enums)
 ```cpp
-enum class AccountType { SAVINGS, CHECKING, LOAN }
-enum class TransactionType { DEPOSIT, WITHDRAWAL, TRANSFER, INTEREST, FEE, EMI_PAYMENT }
-enum class TransactionStatus { PENDING, COMPLETED, FAILED, REVERSED }
-enum class CustomerStatus { ACTIVE, INACTIVE, SUSPENDED, CLOSED }
-enum class LoanStatus { ACTIVE, PAID_OFF, DEFAULTED, PENDING_APPROVAL }
+enum AccountType     { SAVINGS, CHECKING, LOAN }
+enum TransactionType { DEPOSIT, WITHDRAWAL, TRANSFER, INTEREST, FEE, EMI_PAYMENT }
+enum TransactionStatus { PENDING, COMPLETED, FAILED, REVERSED }
+enum CustomerStatus  { ACTIVE, INACTIVE, SUSPENDED, CLOSED }
+enum LoanStatus      { LOAN_ACTIVE, PAID_OFF, DEFAULTED, PENDING_APPROVAL }
 ```
 
-## 🚀 Compilation & Build
+## Compilation & Build
 
 ### Using Make (Recommended)
 ```bash
@@ -111,11 +121,11 @@ make
 ### Using g++ (Manual)
 ```bash
 cd CPPBankProject
-g++ -std=c++17 -Wall -Wextra -pedantic -I./include \
+g++ -std=c++03 -I./include \
     -o BankSystem \
     src/main.cpp src/Utils.cpp src/Customer.cpp src/Transaction.cpp \
     src/Account.cpp src/SavingsAccount.cpp src/CheckingAccount.cpp \
-    src/LoanAccount.cpp src/Bank.cpp
+    src/LoanAccount.cpp src/Globals.cpp src/Bank.cpp
 ./BankSystem
 ```
 
@@ -124,14 +134,12 @@ g++ -std=c++17 -Wall -Wextra -pedantic -I./include \
 - `make clean`: Clean build artifacts
 
 ### Cross-Platform Support
-- ✅ Linux (GCC)
-- ✅ Windows (MinGW/MSVC)
-- ✅ macOS (Clang)
-- Uses cross-platform headers only: `<iostream>`, `<string>`, `<vector>`, `<map>`, etc.
-- Platform detection for console clearing
-- Static linking for C++ standard library compatibility
+- Linux (GCC)
+- Windows (MinGW)
+- macOS (Clang)
+- Uses cross-platform standard headers only: `<iostream>`, `<string>`, `<vector>`, `<map>`, etc.
 
-## 🏦 Features & Menus
+## Features & Menus
 
 ### Main Menu Options
 1. Register New Customer
@@ -174,16 +182,16 @@ g++ -std=c++17 -Wall -Wextra -pedantic -I./include \
 - Payment tracking and loan status updates
 - Detailed schedule display with principal/interest breakdown
 
-## 📏 Code Statistics
+## Code Statistics
 
 - **Total Lines**: 1500+
-- **Number of Files**: 15
+- **Number of Files**: 20 (10 headers + 10 sources)
 - **Bank.cpp**: 280+ lines
 - **main.cpp**: 400+ lines
 - **Account.cpp**: 120+ lines
 - All `.cpp` files: 60-150+ lines each
 
-## 🎯 Exception Handling
+## Exception Handling
 
 - Input validation with try-catch blocks
 - Meaningful error messages for invalid operations
@@ -192,15 +200,15 @@ g++ -std=c++17 -Wall -Wextra -pedantic -I./include \
 - Overdraft validation
 - Minimum balance enforcement
 
-## 💡 Design Patterns
+## Design Patterns
 
 - **Abstract Factory**: Creating different account types
 - **Polymorphism**: Treating different accounts through base class interface
 - **Encapsulation**: Private member variables with public accessors
-- **RAII**: Smart pointers for automatic memory cleanup
 - **Separation of Concerns**: Utils, Bank, Account classes with distinct responsibilities
+- **Friend Functions**: Controlled privileged access to private members
 
-## 📚 Usage Example
+## Usage Example
 
 ```cpp
 // Create bank
@@ -210,7 +218,7 @@ Bank bank("National C++ Bank");
 bank.registerCustomer("John", "Doe", "john@example.com", "123-456-7890", "123 Main St");
 
 // Create savings account for customer
-auto account = bank.createAccount("CUST000001", AccountType::SAVINGS, 1000.0);
+Account* account = bank.createAccount("CUST001000", SAVINGS, 1000.0);
 
 // Perform transactions
 bank.depositToAccount("ACC002000", 500.0);
@@ -223,36 +231,38 @@ bank.applyMonthlyProcessing();
 bank.generateBankReport();
 ```
 
-## 🔧 Build Requirements
+## Build Requirements
 
-- **C++ Standard**: C++17 or later
+- **C++ Standard**: C++03 or later
 - **Build System**: GNU Make
-- **Compiler**: GCC 7+, Clang 5+, or MSVC 2017+
+- **Compiler**: GCC 4.x+, Clang, or MinGW
 - **Platform**: Windows, Linux, macOS
 
-## 📝 Notes
+## Notes
 
 - All currency values are stored as `double`
 - Timestamps use `time_t` from `<ctime>`
 - Transaction history is persistent within program execution
 - No external dependencies (pure C++ Standard Library)
-- Fully cross-platform compatible
+- Uses `typedef` for type aliases (C++03 compatible, no `using` aliases)
+- Global state managed through `Globals.h` / `Globals.cpp`
 
-## 🎓 Learning Objectives
+## Learning Objectives
 
 This project demonstrates:
 - Object-Oriented Programming (OOP) principles
 - Inheritance and polymorphism
 - Exception handling
 - STL containers (vector, map, string)
-- File and console I/O
+- C++03 compatible patterns (raw pointers, plain enums, typedef)
+- Console I/O
 - Date/time handling
 - Financial calculations
 - State management
-- System design patterns
 
 ---
 
 **Version**: 1.0.0  
 **Date**: April 2026  
+**Standard**: C++03  
 **Platform**: Cross-Platform (Windows/Linux/macOS)
