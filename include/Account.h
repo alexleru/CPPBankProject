@@ -3,7 +3,6 @@
 
 #include <string>
 #include <vector>
-#include <memory>
 #include "Enums.h"
 #include "Transaction.h"
 
@@ -23,7 +22,7 @@ public:
     Account(AccountType accountType, double initialBalance);
 
     // Destructor
-    virtual ~Account() = default;
+    virtual ~Account();
 
     // Pure virtual methods
     virtual AccountType getAccountType() const = 0;

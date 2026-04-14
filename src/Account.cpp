@@ -10,10 +10,14 @@
 Account::Account(AccountType accountType, double initialBalance)
     : type(accountType),
       balance(initialBalance),
-      createdDate(std::time(nullptr)),
-      lastModifiedDate(std::time(nullptr)),
+      createdDate(std::time(NULL)),
+      lastModifiedDate(std::time(NULL)),
       isActive(true) {
     accountId = Utils::generateAccountId();
+}
+
+// Destructor
+Account::~Account() {
 }
 
 // Deposit funds into account
@@ -31,7 +35,7 @@ void Account::deposit(double amount, const std::string& description) {
     lastModifiedDate = std::time(nullptr);
     
     // Record transaction
-    Transaction transaction(TransactionType::DEPOSIT, amount, description);
+    Transaction transaction(DEPOSIT, amount, description);
     addTransaction(transaction);
     
     std::cout << "Deposit successful! " << Utils::formatCurrency(amount) 
@@ -59,7 +63,7 @@ bool Account::withdraw(double amount, const std::string& description) {
     lastModifiedDate = std::time(nullptr);
     
     // Record transaction
-    Transaction transaction(TransactionType::WITHDRAWAL, amount, description);
+    Transaction transaction(WITHDRAWAL, amount, description);
     addTransaction(transaction);
     
     std::cout << "Withdrawal successful! " << Utils::formatCurrency(amount) 
@@ -93,8 +97,8 @@ void Account::printStatement() const {
                   << std::setw(20) << "Description" << std::endl;
         std::cout << "-----------------------------------------------\n";
         
-        for (const auto& transaction : transactionHistory) {
-            transaction.display();
+        for (size_t i = 0; i < transactionHistory.size(); ++i) {
+            transactionHistory[i].display();
         }
     }
     
@@ -131,16 +135,16 @@ void Account::setIsActive(bool active) {
 // Static method to get interest rate for account type
 double Account::getInterestForType(AccountType type) {
     switch (type) {
-        case AccountType::SAVINGS:
+        case SAVINGS:
             return SAVINGS_INTEREST_RATE;
-        case AccountType::CHECKING:
+        case CHECKING:
             return CHECKING_INTEREST_RATE;
-        case AccountType::LOAN:
+        case LOAN:
             return LOAN_INTEREST_RATE;
         default:
             return 0.0;
     }
-}
+}}
 
 // Static method to convert account type to string
 std::string Account::typeToString(AccountType type) {

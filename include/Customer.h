@@ -3,7 +3,6 @@
 
 #include <string>
 #include <vector>
-#include <memory>
 #include "Enums.h"
 #include "Account.h"
 
@@ -21,7 +20,7 @@ private:
     std::string address;
     CustomerStatus status;
     time_t registrationDate;
-    std::vector<std::shared_ptr<Account>> accounts;
+    std::vector<Account*> accounts;
 
 public:
     // Constructor
@@ -29,7 +28,7 @@ public:
              const std::string& email, const std::string& phone, const std::string& address);
 
     // Destructor
-    ~Customer() = default;
+    ~Customer();
 
     // Getters
     std::string getCustomerId() const;
@@ -51,9 +50,9 @@ public:
     void setStatus(CustomerStatus newStatus);
 
     // Account management
-    std::shared_ptr<Account> addAccount(std::shared_ptr<Account> account);
-    std::shared_ptr<Account> getAccount(int index) const;
-    std::shared_ptr<Account> getAccountById(const std::string& accountId) const;
+    Account* addAccount(Account* account);
+    Account* getAccount(int index) const;
+    Account* getAccountById(const std::string& accountId) const;
     bool canAddAccount() const;
     bool removeAccount(const std::string& accountId);
 

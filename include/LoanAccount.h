@@ -28,11 +28,11 @@ public:
     LoanAccount(double principal, double rate = 0.08, int termMonths = 12);
 
     // Destructor
-    ~LoanAccount() override = default;
+    ~LoanAccount();
 
     // Pure virtual implementations
-    AccountType getAccountType() const override;
-    void applyMonthlyProcessing() override;
+    AccountType getAccountType() const;
+    void applyMonthlyProcessing();
 
     // Loan-specific methods
     void generateRepaymentSchedule();

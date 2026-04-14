@@ -15,21 +15,21 @@ public:
     SavingsAccount(double initialBalance, double rate = 0.035);
 
     // Destructor
-    ~SavingsAccount() override = default;
+    ~SavingsAccount();
 
     // Pure virtual implementations
-    AccountType getAccountType() const override;
-    void applyMonthlyProcessing() override;
+    AccountType getAccountType() const;
+    void applyMonthlyProcessing();
 
     // Specific methods for SavingsAccount
     void applyInterest();
-    bool withdraw(double amount, const std::string& description = "Withdrawal") override;
+    bool withdraw(double amount, const std::string& description = "Withdrawal");
     void setInterestRate(double rate);
     double getInterestRate() const;
     double getMinimumBalance() const;
 
     // Display
-    void displayAccountInfo() const override;
+    void displayAccountInfo() const;
 
 private:
     // Validates minimum balance constraint

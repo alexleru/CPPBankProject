@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <memory>
 #include "Customer.h"
 #include "Account.h"
 
@@ -13,14 +12,14 @@ class Bank {
 private:
     std::string bankName;
     std::vector<Customer> customers;
-    std::map<std::string, std::shared_ptr<Account>> accountRegistry; // Fast account lookup
+    std::map<std::string, Account*> accountRegistry; // Fast account lookup
 
 public:
     // Constructor
     Bank(const std::string& name);
 
     // Destructor
-    ~Bank() = default;
+    ~Bank();
 
     // Customer management
     bool registerCustomer(const std::string& firstName, const std::string& lastName,
@@ -32,12 +31,12 @@ public:
     int getCustomerCount() const;
 
     // Account management
-    std::shared_ptr<Account> createAccount(const std::string& customerId,
+    Account* createAccount(const std::string& customerId,
                                           AccountType type, double initialBalance,
                                           double additionalParam = 0.0);
-    std::shared_ptr<Account> findAccount(const std::string& accountId) const;
+    Account* findAccount(const std::string& accountId) const;
     void searchAccounts(const std::string& customerId) const;
-    std::vector<std::shared_ptr<Account>> getCustomerAccounts(const std::string& customerId) const;
+    std::vector<Account*> getCustomerAccounts(const std::string& customerId) const;
     void listAllAccounts() const;
 
     // Basic operations

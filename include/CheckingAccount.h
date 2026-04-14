@@ -15,14 +15,14 @@ public:
     CheckingAccount(double initialBalance, double overdraft = 500.0);
 
     // Destructor
-    ~CheckingAccount() override = default;
+    ~CheckingAccount();
 
     // Pure virtual implementations
-    AccountType getAccountType() const override;
-    void applyMonthlyProcessing() override;
+    AccountType getAccountType() const;
+    void applyMonthlyProcessing();
 
     // Specific methods for CheckingAccount
-    bool withdraw(double amount, const std::string& description = "Withdrawal") override;
+    bool withdraw(double amount, const std::string& description = "Withdrawal");
     void applyMonthlyFee();
     void resetMonthlyTransactionCount();
     int getMonthlyTransactionCount() const;
@@ -30,7 +30,7 @@ public:
     double getAvailableBalance() const;
 
     // Display
-    void displayAccountInfo() const override;
+    void displayAccountInfo() const;
 
 private:
     // Checks if withdrawal would exceed overdraft
