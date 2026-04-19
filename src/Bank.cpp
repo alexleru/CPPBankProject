@@ -346,6 +346,40 @@ void Bank::generateBankReport() const {
     std::cout << "===============================================\n\n";
 }
 
+// Apply a caller-supplied rule to every active account's balance.
+// Demonstrates passing a function pointer as a parameter.
+//   Parameter syntax: double (*rule)(double)
+// Example callers might pass: "add 1% bonus", "apply flat fee", etc.
+void Bank::applyToAllAccounts(double (*rule)(double)) {
+    if (rule == NULL) {
+        std::cerr << "applyToAllAccounts: null rule function pointer\n";
+        return;
+    }
+
+    std::cout << "\nApplying custom rule to all active accounts...\n";
+    int touched = 0;
+
+    for (AccountRegistry::iterator it = accountRegistry.begin();
+         it != accountRegistry.end(); ++it) {
+        Account* account = it->second;
+        if (account && account->getIsActive()) {
+            double oldBalance = account->getBalance();
+            double newBalance = rule(oldBalance);
+            if (newBalance < 0) {
+                // Rule produced an invalid balance - skip this account.
+                std::cerr << "  Skipping " << account->getAccountId()
+                          << " (rule produced negative balance)\n";
+                continue;
+            }
+            // forceBalanceUpdate is a friend of Account declared in Account.h
+            forceBalanceUpdate(*account, newBalance);
+            ++touched;
+        }
+    }
+
+    std::cout << "Custom rule applied to " << touched << " account(s).\n";
+}
+
 // Apply monthly processing to all accounts
 void Bank::applyMonthlyProcessing() {
     std::cout << "\nApplying monthly processing to all accounts...\n";

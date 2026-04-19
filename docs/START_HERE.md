@@ -143,7 +143,7 @@ Read: Overview paragraph only
 ```
 Open: QUICK_REFERENCE.md
 Go to: "Menu Options Map"
-Review: All 14 menu options
+Review: All 17 menu options
 ```
 
 ### Step 3: Try Demo (1 min)

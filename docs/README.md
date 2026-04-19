@@ -87,8 +87,12 @@ CPPBankProject/
 - Transaction processing (deposits, withdrawals, transfers)
 - Monthly processing (interest, fees)
 - Reporting and analytics
+- `applyToAllAccounts(double (*rule)(double))` — applies a caller-supplied
+  function pointer to every active account's balance (bonus, fee, custom rule).
+  Demonstrates the C++ strategy-pattern-via-function-pointer idiom; maps to
+  `java.util.function.DoubleUnaryOperator` in the Java port.
 
-### Static Methods (8 total)
+### Static Methods (11 total)
 ```cpp
 Utils::formatCurrency()         // Format: $1234.56
 Utils::formatDate()             // Format: YYYY-MM-DD HH:MM:SS
@@ -96,6 +100,9 @@ Utils::generateCustomerId()     // Unique customer ID
 Utils::generateAccountId()      // Unique account ID
 Utils::validateEmail()          // Email format validation
 Utils::validatePhone()          // Phone format validation
+Utils::add(int, int)            // Function-pointer demo helper
+Utils::multiply(int, int)       // Function-pointer demo helper
+Utils::performOperation(int, int, int (*)(int, int))  // Takes a function pointer
 LoanAccount::calculateEMI()     // EMI calculation
 Account::getInterestForType()   // Type-based interest rate
 ```
@@ -156,6 +163,9 @@ g++ -std=c++03 -I./include \
 12. List All Accounts
 13. Generate Bank Report
 14. Close Account
+15. Admin/Debug Functions
+16. Calculate Bond Parameters
+17. Function Pointer Demo
 0. Exit
 
 ### Core Functionality
@@ -181,6 +191,18 @@ g++ -std=c++03 -I./include \
 - Automatic repayment schedule generation
 - Payment tracking and loan status updates
 - Detailed schedule display with principal/interest breakdown
+
+#### Function Pointer Demo (menu option 17)
+- Illustrates passing a function as a parameter in C++
+- `Utils::performOperation(int, int, int (*)(int, int))` dispatches to
+  `Utils::add` or `Utils::multiply` (mirrors the canonical C++ example:
+  `Result: 8`, `Result: 15`)
+- `Bank::applyToAllAccounts(double (*rule)(double))` walks every active
+  account and applies a caller-supplied rule (e.g. `applyOnePercentBonus`,
+  `applyFlatMaintenanceFee` defined in `main.cpp`)
+- Included to document the C++ idiom that will be modernised to Java
+  functional interfaces (`IntBinaryOperator`, `DoubleUnaryOperator`,
+  `BiFunction`)
 
 ## Code Statistics
 
@@ -259,6 +281,7 @@ This project demonstrates:
 - Date/time handling
 - Financial calculations
 - State management
+- Function pointers as parameters (strategy pattern in C++)
 
 ---
 

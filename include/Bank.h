@@ -56,6 +56,16 @@ public:
     void applyMonthlyProcessing();
     void displayAccountStatement(const std::string& accountId) const;
 
+    // ---------------------------------------------------------------------
+    // Function pointer usage (C++ style strategy pattern)
+    // ---------------------------------------------------------------------
+    // Applies the caller-supplied rule to every active account's balance.
+    // The rule takes the current balance and returns the new balance.
+    //   Parameter syntax: double (*rule)(double)
+    // Typical uses: bonus interest, promotional credit, maintenance fee.
+    // Maps to java.util.function.DoubleUnaryOperator in the Java version.
+    void applyToAllAccounts(double (*rule)(double));
+
     // Loan operations
     double calculateLoanEMI(double principal, double rate, int months) const;
 

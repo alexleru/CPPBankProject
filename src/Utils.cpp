@@ -156,6 +156,28 @@ std::string Utils::transactionTypeToString(TransactionType type) {
     }
 }
 
+// ---------------------------------------------------------------------
+// Function pointer demo
+// ---------------------------------------------------------------------
+// Sample functions to be passed as a function pointer parameter.
+int Utils::add(int a, int b) {
+    return a + b;
+}
+
+int Utils::multiply(int a, int b) {
+    return a * b;
+}
+
+// Function that takes a function pointer as a parameter.
+// Parameter syntax: int (*operation)(int, int)
+void Utils::performOperation(int x, int y, int (*operation)(int, int)) {
+    if (operation == NULL) {
+        std::cerr << "performOperation: null function pointer\n";
+        return;
+    }
+    std::cout << "Result: " << operation(x, y) << std::endl;
+}
+
 // Convert TransactionStatus enum to string
 std::string Utils::transactionStatusToString(TransactionStatus status) {
     switch (status) {

@@ -340,6 +340,11 @@ BankSystemTester class with:
 - ✅ All error conditions documented
 
 ### Recent Changes:
+- **2026-04-19** (_working tree_) - Added menu option 17 "Function Pointer Demo".
+  Introduced `Utils::add`, `Utils::multiply`, `Utils::performOperation(int,int,int(*)(int,int))`
+  and `Bank::applyToAllAccounts(double(*)(double))` to illustrate passing a
+  function pointer as a parameter. Used as reference point for the C++ → Java
+  modernisation (`IntBinaryOperator`, `DoubleUnaryOperator`, `BiFunction`).
 - **2026-04-19** (`c4a3f1d`) - Added menu option 16 "Calculate Bond Parameters"
   (BondCalculator module: PV, FV, stochastic coupon schedule,
   200-line analysis report, cross-platform Makefile).
@@ -403,7 +408,7 @@ CPPBankProject/
 
 ---
 
-**Documentation Suite Version**: 1.1  
-**Last Updated**: April 19, 2026 (commit `c4a3f1d`)  
+**Documentation Suite Version**: 1.2  
+**Last Updated**: April 19, 2026 (function-pointer demo, menu option 17 — working tree)  
 **Total Documentation**: 62.3 KB+ (2,325+ lines)  
 **Status**: ✅ Complete and Ready for Use

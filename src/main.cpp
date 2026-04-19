@@ -58,6 +58,7 @@ void displayMainMenu() {
     std::cout << "14. Close Account\n";
     std::cout << "15. Admin/Debug Functions\n";
     std::cout << "16. Calculate Bond Parameters\n";
+    std::cout << "17. Function Pointer Demo\n";
     std::cout << "0.  Exit\n";
     std::cout << "========================================\n";
     std::cout << "Enter your choice: ";
@@ -477,6 +478,42 @@ void calculateBondParameters() {
     pauseScreen();
 }
 
+// ---------------------------------------------------------------------
+// Function pointer demo
+// ---------------------------------------------------------------------
+// A free function matching the signature expected by
+// Bank::applyToAllAccounts, i.e. double (*)(double).
+// This one gives every active account a 1% bonus.
+double applyOnePercentBonus(double balance) {
+    return balance * 1.01;
+}
+
+// Another matching rule: apply a flat $5 maintenance fee, floor at 0.
+double applyFlatMaintenanceFee(double balance) {
+    double result = balance - 5.0;
+    return (result < 0) ? 0.0 : result;
+}
+
+void functionPointerDemo() {
+    clearScreen();
+    std::cout << "=== FUNCTION POINTER DEMO ===\n\n";
+
+    std::cout << "--- Utils::performOperation (int (*)(int, int)) ---\n";
+    // Passing the address of Utils::add
+    Utils::performOperation(5, 3, Utils::add);       // Result: 8
+    // Passing the address of Utils::multiply
+    Utils::performOperation(5, 3, Utils::multiply);  // Result: 15
+
+    std::cout << "\n--- Bank::applyToAllAccounts (double (*)(double)) ---\n";
+    std::cout << "Rule 1: +1% bonus to every active account\n";
+    globalBank.applyToAllAccounts(applyOnePercentBonus);
+
+    std::cout << "\nRule 2: flat $5 maintenance fee on every active account\n";
+    globalBank.applyToAllAccounts(applyFlatMaintenanceFee);
+
+    pauseScreen();
+}
+
 // Display welcome message
 void displayWelcome() {
     clearScreen();
@@ -557,6 +594,9 @@ int main() {
                     break;
                 case 16:
                     calculateBondParameters();
+                    break;
+                case 17:
+                    functionPointerDemo();
                     break;
                 case 0:
                     running = false;

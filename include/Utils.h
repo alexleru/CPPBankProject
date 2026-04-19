@@ -34,6 +34,23 @@ public:
     static std::string transactionTypeToString(TransactionType type);
     static std::string transactionStatusToString(TransactionStatus status);
 
+    // ---------------------------------------------------------------------
+    // Function pointer demo
+    // ---------------------------------------------------------------------
+    // These helpers demonstrate passing a function pointer as a parameter.
+    // The callable has the signature: int (*)(int, int).
+    // In Java-modernised code this maps cleanly to:
+    //     java.util.function.IntBinaryOperator
+    // or  java.util.function.BiFunction<Integer,Integer,Integer>
+    // ---------------------------------------------------------------------
+    static int add(int a, int b);
+    static int multiply(int a, int b);
+
+    // Takes two operands and a function pointer describing the operation.
+    // Prints the result to std::cout.
+    //   Syntax of the parameter: int (*operation)(int, int)
+    static void performOperation(int x, int y, int (*operation)(int, int));
+
 private:
     // Private static counter for ID generation
     static int customerIdCounter;

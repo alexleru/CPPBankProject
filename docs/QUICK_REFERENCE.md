@@ -4,6 +4,7 @@
 
 | Date       | Commit    | Author          | Summary                                                                 |
 |------------|-----------|-----------------|-------------------------------------------------------------------------|
+| 2026-04-19 | _working_ | Alexey Leshchuk | Add function-pointer parameter demo: `Utils::add` / `Utils::multiply` / `Utils::performOperation(int,int,int(*)(int,int))` plus `Bank::applyToAllAccounts(double(*)(double))`, exposed through new menu option 17 "Function Pointer Demo". |
 | 2026-04-19 | `c4a3f1d` | Alexey Leshchuk | Add "Calculate Bond Parameters" feature as menu option 16 (PV, FV, coupon stream analytics, 200-line `generateBondAnalysisReport`, cross-platform Makefile). |
 | 2026-04-12 | `c712366` | Alexey Leshchuk | Update README to reflect C++03 codebase accurately.                      |
 | 2026-04-12 | `181d423` | Alexey Leshchuk | Build cleanly without extra flags.                                       |
@@ -14,7 +15,7 @@
 ### Menu Options Map
 
 ```
-┌─ MAIN MENU (16 Options) ─────────────────────────────┐
+┌─ MAIN MENU (17 Options) ─────────────────────────────┐
 │                                                      │
 │  1. Register New Customer         (Customer Mgmt)    │
 │  2. Open New Account              (Account Creation) │
@@ -32,6 +33,7 @@
 │  14. Close Account                (Account Mgmt)     │
 │  15. Admin/Debug Functions        (Admin)            │
 │  16. Calculate Bond Parameters    (Calculation)      │
+│  17. Function Pointer Demo        (Language Demo)    │
 │                                                      │
 │  0. Exit                          (Terminate)        │
 │                                                      │
@@ -123,7 +125,7 @@ N/A = Not Applicable
 
 ### Numeric Input Validation
 - **Amounts**: Must be positive (> 0)
-- **Menu Choices**: Must be integer 0-14
+- **Menu Choices**: Must be integer 0-17
 - **Invalid Inputs**: Non-numeric characters rejected
 
 ---
@@ -390,6 +392,12 @@ static bool validatePhone(const std::string& phone);
 static std::string accountTypeToString(AccountType);   // "Savings"
 static std::string transactionTypeToString(TransactionType);
 static std::string transactionStatusToString(TransactionStatus);
+
+// Function pointer demo (menu option 17)
+static int  add(int a, int b);                         // returns a + b
+static int  multiply(int a, int b);                    // returns a * b
+static void performOperation(int x, int y,
+                             int (*operation)(int, int));  // dispatches via fn ptr
 ```
 
 ### Account Static Methods
@@ -401,6 +409,58 @@ static std::string typeToString(AccountType type);
 ### LoanAccount Static Methods
 ```cpp
 static double calculateEMI(double principal, double rate, int months);
+```
+
+### Bank Instance Methods (function-pointer parameter)
+```cpp
+// Applies rule(balance) to every active account.
+// Rule must have signature: double (*)(double)
+void applyToAllAccounts(double (*rule)(double));
+```
+
+---
+
+## Function Pointers Quick Reference
+
+### C++ Syntax
+```cpp
+// Declaration of a parameter that is a function pointer:
+//   returnType (*paramName)(arg1Type, arg2Type, ...)
+
+void performOperation(int x, int y, int (*operation)(int, int));
+void applyToAllAccounts(double (*rule)(double));
+
+// Calling:
+int r = operation(x, y);       // use exactly like a normal call
+```
+
+### Where It Is Used in This Project
+| Where | Signature | Purpose |
+|-------|-----------|---------|
+| `Utils::performOperation` | `int (*)(int, int)` | Generic binary-int operation demo |
+| `Bank::applyToAllAccounts` | `double (*)(double)` | Apply a rule to every active account |
+| `main.cpp: applyOnePercentBonus` | `double (*)(double)` matching rule | Sample bonus rule (+1%) |
+| `main.cpp: applyFlatMaintenanceFee` | `double (*)(double)` matching rule | Sample fee rule (-$5, floor 0) |
+
+### Java Modernisation Mapping
+| C++ signature | Java 8+ functional interface |
+|---------------|------------------------------|
+| `int (*)(int, int)` | `java.util.function.IntBinaryOperator` |
+| `double (*)(double)` | `java.util.function.DoubleUnaryOperator` |
+| Generic `R (*)(A, B)` | `java.util.function.BiFunction<A, B, R>` |
+| Generic `R (*)(A)` | `java.util.function.Function<A, R>` |
+
+### Expected Output (menu option 17, empty bank)
+```
+--- Utils::performOperation (int (*)(int, int)) ---
+Result: 8
+Result: 15
+
+--- Bank::applyToAllAccounts (double (*)(double)) ---
+Rule 1: +1% bonus to every active account
+Applying custom rule to all active accounts...
+Custom rule applied to 0 account(s).
+...
 ```
 
 ---
@@ -498,6 +558,6 @@ END
 
 ---
 
-**Quick Reference Version**: 1.1  
-**Last Updated**: April 19, 2026 (commit `c4a3f1d`)  
+**Quick Reference Version**: 1.2  
+**Last Updated**: April 19, 2026 (function-pointer demo, menu option 17 — working tree)  
 **For**: Developers & QA Team
