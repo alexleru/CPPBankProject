@@ -2,11 +2,13 @@
 #include "../include/Utils.h"
 #include "../include/Constants.h"
 #include "../include/Globals.h"
+#include "../include/BondCalculator.h"
 #include <iostream>
 #include <string>
 #include <iomanip>
 #include <limits>
 #include <cstdlib>
+#include <stdexcept>
 
 // Initialize global variables
 void initializeApplication() {
@@ -55,6 +57,7 @@ void displayMainMenu() {
     std::cout << "13. Generate Bank Report\n";
     std::cout << "14. Close Account\n";
     std::cout << "15. Admin/Debug Functions\n";
+    std::cout << "16. Calculate Bond Parameters\n";
     std::cout << "0.  Exit\n";
     std::cout << "========================================\n";
     std::cout << "Enter your choice: ";
@@ -420,6 +423,60 @@ void adminDebugFunctions() {
     pauseScreen();
 }
 
+// Calculate bond parameters (Present Value / Future Value / analysis report)
+void calculateBondParameters() {
+    clearScreen();
+    std::cout << "=== CALCULATE BOND PARAMETERS ===\n\n";
+    std::cout << "A bond is valued using a monthly coupon rate that has a\n";
+    std::cout << "fixed component and a random component (up to 3%).\n\n";
+
+    double nominal = Utils::getValidatedAmount("Enter bond nominal (face value): ");
+    int term = Utils::getValidatedInteger("Enter bond term (in months): ");
+    double fixedRatePct = Utils::getValidatedAmount(
+        "Enter FIXED monthly coupon rate (as percentage, e.g. 0.5 for 0.5%): ");
+    double maxRandomPct = Utils::getValidatedAmount(
+        "Enter MAX random monthly part (percentage, 0..3): ");
+    double discountRatePct = Utils::getValidatedAmount(
+        "Enter annual discount rate (as percentage, e.g. 5 for 5%): ");
+
+    if (maxRandomPct > 3.0) {
+        std::cout << "Random part capped at 3% as per specification.\n";
+        maxRandomPct = 3.0;
+    }
+
+    double fixedRate = fixedRatePct / 100.0;
+    double maxRandomRate = maxRandomPct / 100.0;
+    double discountRate = discountRatePct / 100.0;
+
+    try {
+        BondCalculator calculator(nominal, term, fixedRate,
+                                  maxRandomRate, discountRate);
+        calculator.generateCashFlowSchedule();
+
+        double pv = calculator.calculatePresentValue();
+        double fv = calculator.calculateFutureValue();
+        double totalCoupons = calculator.calculateTotalCouponIncome();
+        double avgRate = calculator.calculateAverageCouponRate();
+
+        std::cout << "\n--- Quick summary ---\n";
+        std::cout << "Present Value       : " << Utils::formatCurrency(pv) << "\n";
+        std::cout << "Future Value        : " << Utils::formatCurrency(fv) << "\n";
+        std::cout << "Total coupon income : " << Utils::formatCurrency(totalCoupons) << "\n";
+        std::cout << "Avg monthly rate    : " << (avgRate * 100.0) << " %\n";
+
+        std::cout << "\nShow full analysis report? (y/n): ";
+        char ans = 'n';
+        std::cin >> ans;
+        if (ans == 'y' || ans == 'Y') {
+            calculator.generateBondAnalysisReport();
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+
+    pauseScreen();
+}
+
 // Display welcome message
 void displayWelcome() {
     clearScreen();
@@ -497,6 +554,9 @@ int main() {
                     break;
                 case 15:
                     adminDebugFunctions();
+                    break;
+                case 16:
+                    calculateBondParameters();
                     break;
                 case 0:
                     running = false;

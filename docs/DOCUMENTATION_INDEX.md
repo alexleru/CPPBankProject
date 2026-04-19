@@ -334,10 +334,15 @@ BankSystemTester class with:
 - **Pass Rate**: 3.3%
 
 ### Coverage:
-- ✅ All 14 menu options documented
+- ✅ All 16 menu options documented
 - ✅ All 5 test sections covered
 - ✅ All features tested
 - ✅ All error conditions documented
+
+### Recent Changes:
+- **2026-04-19** (`c4a3f1d`) - Added menu option 16 "Calculate Bond Parameters"
+  (BondCalculator module: PV, FV, stochastic coupon schedule,
+  200-line analysis report, cross-platform Makefile).
 
 ---
 
@@ -391,14 +396,14 @@ CPPBankProject/
 ├── TESTING_GUIDE.md ............... Testing procedures & automation
 ├── QUICK_REFERENCE.md ............ Configuration & quick lookups
 ├── Makefile ........................ Build configuration
-├── include/ ........................ 10 header files
-├── src/ ............................ 9 source files
+├── include/ ........................ 11 header files (+BondCalculator.h)
+├── src/ ............................ 10 source files (+BondCalculator.cpp)
 └── build/ .......................... Compiled binary
 ```
 
 ---
 
-**Documentation Suite Version**: 1.0  
-**Last Updated**: April 12, 2026  
-**Total Documentation**: 62.3 KB (2,325 lines)  
+**Documentation Suite Version**: 1.1  
+**Last Updated**: April 19, 2026 (commit `c4a3f1d`)  
+**Total Documentation**: 62.3 KB+ (2,325+ lines)  
 **Status**: ✅ Complete and Ready for Use

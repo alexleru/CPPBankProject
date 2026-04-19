@@ -1,11 +1,20 @@
 # Bank Account Management System - Quick Reference & Features Matrix
 
+## Recent Changes
+
+| Date       | Commit    | Author          | Summary                                                                 |
+|------------|-----------|-----------------|-------------------------------------------------------------------------|
+| 2026-04-19 | `c4a3f1d` | Alexey Leshchuk | Add "Calculate Bond Parameters" feature as menu option 16 (PV, FV, coupon stream analytics, 200-line `generateBondAnalysisReport`, cross-platform Makefile). |
+| 2026-04-12 | `c712366` | Alexey Leshchuk | Update README to reflect C++03 codebase accurately.                      |
+| 2026-04-12 | `181d423` | Alexey Leshchuk | Build cleanly without extra flags.                                       |
+| 2026-04-12 | `977c94a` | Alexey Leshchuk | Refactor codebase to C++03 with type aliases and global state.           |
+
 ## Quick Reference Guide
 
 ### Menu Options Map
 
 ```
-┌─ MAIN MENU (14 Options) ─────────────────────────────┐
+┌─ MAIN MENU (16 Options) ─────────────────────────────┐
 │                                                      │
 │  1. Register New Customer         (Customer Mgmt)    │
 │  2. Open New Account              (Account Creation) │
@@ -21,6 +30,8 @@
 │  12. List All Accounts            (Reporting)        │
 │  13. Generate Bank Report         (Reporting)        │
 │  14. Close Account                (Account Mgmt)     │
+│  15. Admin/Debug Functions        (Admin)            │
+│  16. Calculate Bond Parameters    (Calculation)      │
 │                                                      │
 │  0. Exit                          (Terminate)        │
 │                                                      │
@@ -151,6 +162,36 @@ Total Interest = Total Cost - Principal
 Example: $10,000 loan with $880 EMI for 12 months
   Total Cost = $880 × 12 = $10,560
   Total Interest = $10,560 - $10,000 = $560
+```
+
+### Bond Parameters (Menu Option 16)
+```
+Inputs:
+  N            = nominal (face value)
+  n            = term in months
+  r_fix        = fixed monthly coupon rate (decimal)
+  r_rand_i     = random monthly coupon rate per month i,
+                 uniformly distributed in [0, r_rand_max],
+                 where r_rand_max ≤ 3% (0.03)
+  d            = annual discount rate (decimal)
+  d_m          = d / 12      (monthly discount rate)
+
+Cash flow of month i:
+  C_i = N × (r_fix + r_rand_i)
+
+Present Value (today's price of the bond):
+  PV = Σ_{i=1..n} C_i / (1 + d_m)^i  +  N / (1 + d_m)^n
+
+Future Value (all coupons reinvested at d_m to maturity):
+  FV = Σ_{i=1..n} C_i × (1 + d_m)^(n-i)  +  N
+
+Macaulay Duration (in years):
+  D = [ Σ_{i=1..n} i × (C_i / (1 + d_m)^i) + n × (N / (1 + d_m)^n) ]
+      / [ PV × 12 ]
+
+Example: N = 1000, n = 12, r_fix = 0.5%, r_rand_max = 3%, d = 5%
+  Monthly coupons fluctuate between $5 and $35.
+  PV and FV depend on the random draws; regenerate to resample.
 ```
 
 ### Portfolio Total (Customer)
@@ -312,6 +353,7 @@ make
 - `LoanAccount.h` - Loan account derived
 - `Transaction.h` - Transaction class
 - `Bank.h` - Bank management class
+- `BondCalculator.h` - Bond valuation class (PV / FV / analytics)
 
 ### Source Files (Directory: `src/`)
 - `Utils.cpp` - Utility implementations (130+ lines)
@@ -322,6 +364,8 @@ make
 - `CheckingAccount.cpp` - Checking features (115+ lines)
 - `LoanAccount.cpp` - Loan operations (160+ lines)
 - `Bank.cpp` - Bank core logic (280+ lines)
+- `BondCalculator.cpp` - Bond valuation and analysis (350+ lines;
+  `generateBondAnalysisReport` alone is ~200 lines)
 - `main.cpp` - UI and entry point (400+ lines)
 
 ---
@@ -454,6 +498,6 @@ END
 
 ---
 
-**Quick Reference Version**: 1.0  
-**Last Updated**: April 12, 2026  
+**Quick Reference Version**: 1.1  
+**Last Updated**: April 19, 2026 (commit `c4a3f1d`)  
 **For**: Developers & QA Team
