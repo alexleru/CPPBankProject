@@ -4,13 +4,21 @@
 
 Build the project first:
 ```bash
+# Linux / macOS
 cd CPPBankProject
 make
 ```
 
+```cmd
+:: Windows (cmd.exe with MinGW)
+cd CPPBankProject
+mingw32-make
+```
+
 Confirm the binary exists:
 ```bash
-ls -l BankSystem
+ls -l BankSystem         # Linux / macOS
+dir BankSystem.exe       :: Windows
 ```
 
 ---
@@ -18,14 +26,16 @@ ls -l BankSystem
 ## Running the Program
 
 ```bash
-./BankSystem
+./BankSystem             # Linux / macOS
+BankSystem.exe           :: Windows
 ```
 
-The program presents a 3-option menu:
+The program presents a 4-option menu:
 ```
 1. Create Customer
 2. List Customers
-3. Exit
+3. Function Pointer Demo
+4. Exit
 ```
 
 ---
@@ -43,13 +53,13 @@ john.doe@example.com
 123-456-7890
 123 Main Street
 2
-3
+4
 ```
 
 **Expected outputs**:
 - After option 1: `Customer created successfully. ID: CUST001000`
 - After option 2: Customer list shows John Doe with ID `CUST001000`
-- After option 3: `Goodbye.`
+- After option 4: `Goodbye.`
 
 **Pass criteria**: Customer registers and appears in the list; program exits cleanly.
 
@@ -74,7 +84,7 @@ bob@bank.com
 555-123-4567
 200 Second St
 2
-3
+4
 ```
 
 **Expected output after option 2**: Both Alice Johnson (`CUST001000`) and Bob Smith (`CUST001001`) appear in the list.
@@ -109,7 +119,28 @@ Some Address
 
 ---
 
-## Test Scenario D: Empty Fields
+## Test Scenario D: Function Pointer Demo
+
+**Purpose**: Verify that the function-pointer demo invokes both callbacks correctly.
+
+**Input sequence**:
+```
+3
+4
+```
+
+**Expected output after option 3**:
+```
+=== Function Pointer Demo ===
+Result: 8
+Result: 15
+```
+
+**Pass criteria**: Both results print in order; program returns to the menu and exits on `4`.
+
+---
+
+## Test Scenario E: Empty Fields
 
 **Purpose**: Verify that missing required fields are rejected.
 
@@ -141,9 +172,14 @@ Some Address
 - [ ] Each customer shows ID, full name, email, phone, address, and status
 
 ### Menu Navigation
-- [ ] Out-of-range number prompts re-entry
+- [ ] Out-of-range number prompts re-entry (valid range is 1–4)
 - [ ] Non-numeric input prompts re-entry
-- [ ] Option 3 exits cleanly with "Goodbye."
+- [ ] Option 3 runs the Function Pointer Demo and returns to menu
+- [ ] Option 4 exits cleanly with "Goodbye."
+
+### Function Pointer Demo
+- [ ] `Utils::performOperation(5, 3, Utils::add)` prints `Result: 8`
+- [ ] `Utils::performOperation(5, 3, Utils::multiply)` prints `Result: 15`
 
 ---
 
@@ -151,8 +187,9 @@ Some Address
 
 | Problem | Likely Cause | Fix |
 |---------|-------------|-----|
-| `BankSystem: not found` | Not compiled | Run `make` |
-| Compile error | Compiler not found | Install `g++` |
+| `BankSystem: not found` | Not compiled | Run `make` (or `mingw32-make` on Windows) |
+| Compile error | Compiler not found | Install `g++` (or MinGW on Windows) |
+| `rm`/`mkdir` fails on Windows cmd | Using Unix `make` with Unix commands | Use `mingw32-make`; the Makefile switches to Windows commands automatically |
 | Validation keeps failing | Typo in email/phone | Check format: `name@domain.com`, `123-456-7890` |
 | List shows nothing | No customers added | Use option 1 first |
 

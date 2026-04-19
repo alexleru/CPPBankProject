@@ -23,8 +23,8 @@ CPPBankProject/
 │   └── README.md                    # This file
 ├── build/                           # Build artifacts (created by make)
 │   └── *.o                         # Object files
-├── BankSystem                       # Compiled executable
-└── Makefile                         # Build configuration
+├── BankSystem(.exe)                 # Compiled executable (.exe on Windows)
+└── Makefile                         # Cross-platform build (GNU make / mingw32-make)
 ```
 
 ## Technical Features
@@ -57,12 +57,28 @@ CPPBankProject/
 - `generateCustomerId()` — generates unique `CUST` + 6-digit ID
 - `validateEmail()` — checks `@` and domain with TLD
 - `validatePhone()` — checks minimum 10 characters, digits/symbols only
+- `add(int, int)` / `multiply(int, int)` — sample arithmetic functions used by the function-pointer demo
+- `performOperation(int, int, int (*)(int, int))` — accepts a function pointer and applies it to two integers
 
 ### Static Methods
 ```cpp
-Utils::generateCustomerId()   // "CUST001000", "CUST001001", ...
-Utils::validateEmail()        // Email format check
-Utils::validatePhone()        // Phone format check (min 10 chars)
+Utils::generateCustomerId()        // "CUST001000", "CUST001001", ...
+Utils::validateEmail()             // Email format check
+Utils::validatePhone()             // Phone format check (min 10 chars)
+Utils::add(a, b)                   // Sample callback: a + b
+Utils::multiply(a, b)              // Sample callback: a * b
+Utils::performOperation(x, y, fn)  // Calls fn(x, y) and prints the result
+```
+
+### Function Pointers as Parameters
+
+`Utils::performOperation` demonstrates passing a function pointer as a parameter
+(`int (*operation)(int, int)`). Any function that matches this signature can be
+supplied as the callback:
+
+```cpp
+Utils::performOperation(5, 3, Utils::add);      // Result: 8
+Utils::performOperation(5, 3, Utils::multiply); // Result: 15
 ```
 
 ### Enums (1 total, C++03 plain enum)
@@ -72,11 +88,23 @@ enum CustomerStatus { ACTIVE, INACTIVE }
 
 ## Compilation & Build
 
-### Using Make (Recommended)
+The `Makefile` detects the host OS through the `OS` environment variable and
+adjusts the commands accordingly. On Linux/macOS it uses `mkdir -p` / `rm -rf`;
+on Windows (where `OS=Windows_NT`) it uses `mkdir` / `rmdir /S /Q` / `del /Q`
+and produces `BankSystem.exe`.
+
+### Linux / macOS (GNU make)
 ```bash
 cd CPPBankProject
 make
 ./BankSystem
+```
+
+### Windows (MinGW, cmd.exe)
+```cmd
+cd CPPBankProject
+mingw32-make
+BankSystem.exe
 ```
 
 ### Using g++ (Manual)
@@ -90,13 +118,13 @@ g++ -std=c++03 -I./include \
 ```
 
 ### Build Targets
-- `make` or `make all`: Build the project
-- `make clean`: Clean build artifacts
+- `make` / `mingw32-make`: Build the project
+- `make clean` / `mingw32-make clean`: Remove build artifacts and executable
 
 ### Cross-Platform Support
-- Linux (GCC)
-- Windows (MinGW)
-- macOS (Clang)
+- Linux (GCC) — `make`
+- Windows (MinGW) — `mingw32-make` (produces `BankSystem.exe`)
+- macOS (Clang) — `make`
 - Uses standard headers only: `<iostream>`, `<string>`, `<vector>`, etc.
 
 ## Features & Menu
@@ -105,7 +133,8 @@ g++ -std=c++03 -I./include \
 ```
 1. Create Customer
 2. List Customers
-3. Exit
+3. Function Pointer Demo
+4. Exit
 ```
 
 ### Core Functionality
@@ -115,6 +144,12 @@ g++ -std=c++03 -I./include \
 - Email and phone validation on registration
 - Auto-generated unique customer ID (`CUST001000`, `CUST001001`, ...)
 - List all registered customers with their details and status
+
+#### Function Pointer Demo
+- Option 3 exercises `Utils::performOperation`, which takes a function pointer
+  as a parameter (`int (*operation)(int, int)`)
+- Passes `Utils::add` and `Utils::multiply` as callbacks
+- Prints `Result: 8` and `Result: 15`
 
 ## Code Statistics
 
@@ -167,6 +202,8 @@ This project demonstrates:
 - STL containers (`vector`, `string`)
 - C++03 compatible patterns (raw pointers, plain enums)
 - Console I/O and input validation
+- Function pointers as parameters (`int (*operation)(int, int)`)
+- Cross-platform build with a single Makefile (GNU make / MinGW `mingw32-make`)
 
 ---
 

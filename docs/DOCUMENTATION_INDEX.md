@@ -9,7 +9,8 @@
 - Technical features and OOP design
 - Key classes and relationships (`Bank`, `Customer`, `Utils`)
 - Compilation instructions
-- Feature list and 3-option menu
+- Feature list and 4-option menu (includes function-pointer demo)
+- Cross-platform build (GNU make / `mingw32-make`)
 - Usage examples
 
 **When to use**: First-time setup, understanding architecture
@@ -19,7 +20,7 @@
 ### 2. QUICK_REFERENCE.md
 **Purpose**: Quick lookup and reference information
 **Contents**:
-- Menu options (3 options)
+- Menu options (4 options)
 - Customer field requirements
 - Validation rules (email, phone)
 - Constants from `Constants.h`

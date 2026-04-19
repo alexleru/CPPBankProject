@@ -141,12 +141,32 @@ Test cases for the Bank Customer Management System covering customer registratio
 
 ---
 
-### TC-3.3: Exit via Option 3
+### TC-3.3: Exit via Option 4
 **Priority**: High
 **Objective**: Verify clean program exit
 
-**Input**: Enter `3` at the main menu.
+**Input**: Enter `4` at the main menu.
 **Expected Result**: Output shows `Goodbye.` and program exits with code 0.
+**Status**: PENDING
+
+---
+
+## Function Pointer Demo
+
+### TC-4.1: Add callback via performOperation
+**Priority**: Medium
+**Objective**: Verify `Utils::performOperation` invokes `Utils::add` correctly.
+
+**Input**: Enter `3` at the main menu.
+**Expected Result**: Output contains `Result: 8` (from `Utils::performOperation(5, 3, Utils::add)`).
+**Status**: PENDING
+
+### TC-4.2: Multiply callback via performOperation
+**Priority**: Medium
+**Objective**: Verify `Utils::performOperation` invokes `Utils::multiply` correctly.
+
+**Input**: Enter `3` at the main menu.
+**Expected Result**: Output contains `Result: 15` (from `Utils::performOperation(5, 3, Utils::multiply)`).
 **Status**: PENDING
 
 ---
@@ -158,4 +178,5 @@ Test cases for the Bank Customer Management System covering customer registratio
 | Customer Registration | 6 | 4 |
 | List Customers | 3 | 0 |
 | Input Validation | 3 | 0 |
-| **Total** | **12** | **4** |
+| Function Pointer Demo | 2 | 0 |
+| **Total** | **14** | **4** |

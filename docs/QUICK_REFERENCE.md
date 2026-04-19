@@ -7,7 +7,8 @@
 │                                                      │
 │  1. Create Customer          (Customer Management)   │
 │  2. List Customers           (Reporting)             │
-│  3. Exit                     (Terminate)             │
+│  3. Function Pointer Demo    (Callback example)      │
+│  4. Exit                     (Terminate)             │
 │                                                      │
 └──────────────────────────────────────────────────────┘
 ```
@@ -65,6 +66,17 @@ To modify: edit `include/Constants.h` and rebuild with `make`.
 static std::string generateCustomerId();            // "CUST001000"
 static bool        validateEmail(const std::string&);
 static bool        validatePhone(const std::string&);
+
+// Function-pointer demo helpers
+static int         add(int a, int b);               // a + b
+static int         multiply(int a, int b);          // a * b
+static void        performOperation(int x, int y, int (*operation)(int, int));
+```
+
+**Function pointer usage:**
+```cpp
+Utils::performOperation(5, 3, Utils::add);      // Result: 8
+Utils::performOperation(5, 3, Utils::multiply); // Result: 15
 ```
 
 ---
@@ -84,7 +96,7 @@ static bool        validatePhone(const std::string&);
 - `Utils.cpp` — Utility implementations
 - `Customer.cpp` — Customer management
 - `Bank.cpp` — Bank core logic
-- `main.cpp` — UI and entry point (3-option menu)
+- `main.cpp` — UI and entry point (4-option menu, includes function-pointer demo)
 
 ---
 
@@ -98,17 +110,28 @@ enum CustomerStatus { ACTIVE, INACTIVE }
 
 ## Build Reference
 
-| Platform | Compiler | Standard | Command |
-|----------|----------|----------|---------|
-| Linux | GCC 4.x+ | C++03 | `g++ -std=c++03` |
-| Windows | MinGW | C++03 | `mingw-g++ -std=c++03` |
-| macOS | Clang | C++03 | `clang++ -std=c++03` |
+| Platform | Compiler | Standard | Make command | Executable |
+|----------|----------|----------|--------------|------------|
+| Linux    | GCC 4.x+ | C++03    | `make`           | `./BankSystem`     |
+| macOS    | Clang    | C++03    | `make`           | `./BankSystem`     |
+| Windows  | MinGW    | C++03    | `mingw32-make`   | `BankSystem.exe`   |
 
 ```bash
-make          # build
-make clean    # remove build artifacts
-./BankSystem  # run
+# Linux / macOS
+make               # build
+make clean         # remove build artifacts
+./BankSystem       # run
 ```
+
+```cmd
+:: Windows (cmd.exe with MinGW in PATH)
+mingw32-make         :: build
+mingw32-make clean   :: remove build artifacts
+BankSystem.exe       :: run
+```
+
+The Makefile auto-detects Windows via the `OS=Windows_NT` env var and swaps
+`mkdir`/`rm` commands for `mkdir`/`rmdir /S /Q`/`del /Q`.
 
 ---
 

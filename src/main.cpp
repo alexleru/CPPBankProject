@@ -1,6 +1,7 @@
 #include "../include/Bank.h"
 #include "../include/Globals.h"
 #include "../include/Constants.h"
+#include "../include/Utils.h"
 #include <iostream>
 #include <string>
 #include <limits>
@@ -30,6 +31,14 @@ static int readInt(const std::string& prompt, int min, int max) {
     }
 }
 
+static void demoFunctionPointers() {
+    std::cout << "\n=== Function Pointer Demo ===\n";
+    // Passing the address of 'add'
+    Utils::performOperation(5, 3, Utils::add);      // Output: Result: 8
+    // Passing the address of 'multiply'
+    Utils::performOperation(5, 3, Utils::multiply); // Output: Result: 15
+}
+
 static void createCustomer(Bank& bank) {
     std::cout << "\n=== Create Customer ===\n";
     std::string fn = readLine("First name : ");
@@ -54,12 +63,14 @@ int main() {
     while (true) {
         std::cout << "\n1. Create Customer\n"
                   << "2. List Customers\n"
-                  << "3. Exit\n";
-        int choice = readInt("Select (1-3): ", 1, 3);
+                  << "3. Function Pointer Demo\n"
+                  << "4. Exit\n";
+        int choice = readInt("Select (1-4): ", 1, 4);
         switch (choice) {
             case 1: createCustomer(bank); break;
             case 2: bank.listCustomers(); break;
-            case 3: std::cout << "Goodbye.\n"; return 0;
+            case 3: demoFunctionPointers(); break;
+            case 4: std::cout << "Goodbye.\n"; return 0;
         }
     }
 }

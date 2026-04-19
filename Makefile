@@ -1,4 +1,5 @@
 # Bank Account Management System Makefile
+# Works with GNU make (Linux/macOS) and mingw32-make (Windows cmd.exe)
 
 # Compiler settings
 CXX = g++
@@ -20,15 +21,32 @@ SOURCES = $(SRC_DIR)/main.cpp \
 # Object files (placed in BUILD_DIR)
 OBJECTS = $(SOURCES:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 
-# Executable name
-TARGET = BankSystem
+# Executable base name (OS-specific extension is appended below)
+TARGET_NAME = BankSystem
+
+# ---------------------------------------------------------------
+# OS detection: on Windows cmd.exe the env var OS = Windows_NT
+# ---------------------------------------------------------------
+ifeq ($(OS),Windows_NT)
+    EXE_EXT := .exe
+    RM_DIR  := if exist $(BUILD_DIR) rmdir /S /Q $(BUILD_DIR)
+    RM_FILE := if exist $(TARGET_NAME).exe del /Q $(TARGET_NAME).exe
+    MKDIR   := if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
+else
+    EXE_EXT :=
+    RM_DIR  := rm -rf $(BUILD_DIR)
+    RM_FILE := rm -f $(TARGET_NAME)
+    MKDIR   := mkdir -p $(BUILD_DIR)
+endif
+
+TARGET = $(TARGET_NAME)$(EXE_EXT)
 
 # Default target
 all: $(BUILD_DIR) $(TARGET)
 
 # Create build directory
 $(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
+	$(MKDIR)
 
 # Link the executable
 $(TARGET): $(OBJECTS)
@@ -40,7 +58,8 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
 
 # Clean build artifacts
 clean:
-	rm -rf $(BUILD_DIR) $(TARGET)
+	$(RM_DIR)
+	$(RM_FILE)
 
 # Phony targets
 .PHONY: all clean
