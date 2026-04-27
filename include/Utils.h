@@ -26,7 +26,7 @@ public:
     static bool validatePhone(const std::string& phoneNumber);
 
     // Input validation helpers
-    static double getValidatedAmount(const std::string& prompt);
+    static double getValidatedAmount(const std::string& prompt, bool allowZero = false);
     static int getValidatedInteger(const std::string& prompt);
 
     // Utility conversions

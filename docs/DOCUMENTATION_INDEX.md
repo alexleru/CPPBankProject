@@ -401,14 +401,14 @@ CPPBankProject/
 ├── TESTING_GUIDE.md ............... Testing procedures & automation
 ├── QUICK_REFERENCE.md ............ Configuration & quick lookups
 ├── Makefile ........................ Build configuration
-├── include/ ........................ 11 header files (+BondCalculator.h)
-├── src/ ............................ 10 source files (+BondCalculator.cpp)
+├── include/ ........................ 12 header files (+BondCalculator.h, +MortgageAccount.h)
+├── src/ ............................ 11 source files (+BondCalculator.cpp, +MortgageAccount.cpp)
 └── build/ .......................... Compiled binary
 ```
 
 ---
 
-**Documentation Suite Version**: 1.2  
-**Last Updated**: April 19, 2026 (function-pointer demo, menu option 17 — working tree)  
+**Documentation Suite Version**: 1.3  
+**Last Updated**: April 27, 2026 (mortgage feature, menu option 18 — joins MortgageAccount with LoanAccount; heavy C++03 typedef usage)  
 **Total Documentation**: 62.3 KB+ (2,325+ lines)  
 **Status**: ✅ Complete and Ready for Use

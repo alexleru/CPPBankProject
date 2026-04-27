@@ -5,7 +5,8 @@
 enum AccountType {
     SAVINGS,
     CHECKING,
-    LOAN
+    LOAN,
+    MORTGAGE
 };
 
 // Transaction type enumeration

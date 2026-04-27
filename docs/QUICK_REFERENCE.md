@@ -546,6 +546,50 @@ END
 
 ---
 
+
+## Mortgage Feature (menu option 18) — added in v1.3
+
+`MortgageAccount` is a new account type that **inherits from `LoanAccount`** and joins the same `AccountRegistry`. It is the project's primary showcase of C++03 `typedef` usage.
+
+### Submenu
+
+| Option | Action                                            |
+|--------|---------------------------------------------------|
+| 1      | Open new mortgage account                          |
+| 2      | Show mortgage amortization schedule                |
+| 3      | Make mortgage payment (delegates to `LoanAccount`) |
+| 4      | Show mortgage details (LTV, PMI, monthly payment)  |
+| 0      | Back to main menu                                  |
+
+### Key typedefs (in `include/MortgageAccount.h`)
+
+| Typedef                              | Aliases                         | Purpose                                        |
+|--------------------------------------|---------------------------------|------------------------------------------------|
+| `Money`, `Percentage`, `Rate`        | `double`                        | Domain primitives                               |
+| `TermInMonths`, `TermInYears`, `MonthIndex` | `int`                    | Loan term and schedule indices                  |
+| `PropertyId`                         | `unsigned long`                 | Property record id                              |
+| `PropertyAddress`                    | `std::string`                   | Property address text                           |
+| `Property`                           | `struct PropertyInfo`           | Property descriptor                             |
+| `MortgageKind`                       | `enum MortgageType`             | `FIXED_RATE`, `ADJUSTABLE_RATE`, `INTEREST_ONLY`|
+| `Installment`                        | `struct MortgageInstallment`    | Single amortisation row                         |
+| `AmortizationSchedule`               | `std::vector<Installment>`      | Full schedule                                   |
+| `ScheduleIterator`, `ScheduleConstIterator` | `vector<...>::iterator`  | Iterator aliases                                |
+| `BalanceTimeline`                    | `std::map<MonthIndex, Money>`   | Per-month remaining balance                     |
+| `MortgageRule`                       | `Money (*)(Money)`              | Strategy-pattern function pointer               |
+| `MortgageAccount::self_type`         | `MortgageAccount`               | Class self-typedef                              |
+
+### Default mortgage parameters
+
+| Parameter           | Default value         |
+|---------------------|------------------------|
+| Property tax rate   | 1.20% / year of market value |
+| Insurance rate      | 0.35% / year of market value |
+| PMI annual rate     | 0.75% / year of remaining balance |
+| PMI threshold (LTV) | 0.80                  |
+| Months per year     | 12                    |
+
+---
+
 ## Troubleshooting Quick Reference
 
 | Problem | Likely Cause | Quick Fix |
@@ -558,6 +602,6 @@ END
 
 ---
 
-**Quick Reference Version**: 1.2  
-**Last Updated**: April 19, 2026 (function-pointer demo, menu option 17 — working tree)  
+**Quick Reference Version**: 1.3  
+**Last Updated**: April 27, 2026 (mortgage feature, menu option 18 — working tree)  
 **For**: Developers & QA Team

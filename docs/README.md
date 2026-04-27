@@ -17,6 +17,7 @@ CPPBankProject/
 │   ├── SavingsAccount.h             # Savings Account derived class
 │   ├── CheckingAccount.h            # Checking Account derived class
 │   ├── LoanAccount.h                # Loan Account derived class
+│   ├── MortgageAccount.h            # Mortgage Account (derived from LoanAccount)
 │   └── Bank.h                       # Bank management class
 ├── src/                             # Implementation files
 │   ├── main.cpp                     # Entry point with interactive menu
@@ -28,6 +29,7 @@ CPPBankProject/
 │   ├── SavingsAccount.cpp           # Savings Account implementation
 │   ├── CheckingAccount.cpp          # Checking Account implementation
 │   ├── LoanAccount.cpp              # Loan Account implementation
+│   ├── MortgageAccount.cpp          # Mortgage Account implementation
 │   └── Bank.cpp                     # Bank logic implementation
 ├── docs/                            # Documentation
 │   ├── README.md                    # This file
@@ -109,7 +111,7 @@ Account::getInterestForType()   // Type-based interest rate
 
 ### Enums (5 total, C++03 plain enums)
 ```cpp
-enum AccountType     { SAVINGS, CHECKING, LOAN }
+enum AccountType     { SAVINGS, CHECKING, LOAN, MORTGAGE }
 enum TransactionType { DEPOSIT, WITHDRAWAL, TRANSFER, INTEREST, FEE, EMI_PAYMENT }
 enum TransactionStatus { PENDING, COMPLETED, FAILED, REVERSED }
 enum CustomerStatus  { ACTIVE, INACTIVE, SUSPENDED, CLOSED }
@@ -132,7 +134,7 @@ g++ -std=c++03 -I./include \
     -o BankSystem \
     src/main.cpp src/Utils.cpp src/Customer.cpp src/Transaction.cpp \
     src/Account.cpp src/SavingsAccount.cpp src/CheckingAccount.cpp \
-    src/LoanAccount.cpp src/Globals.cpp src/Bank.cpp
+    src/LoanAccount.cpp src/MortgageAccount.cpp src/Globals.cpp src/Bank.cpp
 ./BankSystem
 ```
 
@@ -166,6 +168,7 @@ g++ -std=c++03 -I./include \
 15. Admin/Debug Functions
 16. Calculate Bond Parameters
 17. Function Pointer Demo
+18. Open Mortgage Account / Mortgage Operations
 0. Exit
 
 ### Core Functionality
@@ -191,6 +194,14 @@ g++ -std=c++03 -I./include \
 - Automatic repayment schedule generation
 - Payment tracking and loan status updates
 - Detailed schedule display with principal/interest breakdown
+
+
+#### Mortgage Management (menu option 18)
+- Open a new mortgage account joined to the existing customer.
+- View the full amortisation schedule (principal / interest / escrow / PMI / balance per month).
+- Make a mortgage payment that flows through the inherited `LoanAccount` EMI machinery.
+- View mortgage details: LTV, PMI requirement, total monthly payment.
+- Driven by the C++03 `typedef`-rich `MortgageAccount` API; demonstrates joining a new feature with the existing loan account hierarchy.
 
 #### Function Pointer Demo (menu option 17)
 - Illustrates passing a function as a parameter in C++
@@ -282,6 +293,7 @@ This project demonstrates:
 - Financial calculations
 - State management
 - Function pointers as parameters (strategy pattern in C++)
+- Heavy use of C++03 `typedef` aliases for domain types, containers, and function pointers (Mortgage feature)
 
 ---
 

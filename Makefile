@@ -33,6 +33,7 @@ SOURCES = $(SRC_DIR)/main.cpp \
           $(SRC_DIR)/SavingsAccount.cpp \
           $(SRC_DIR)/CheckingAccount.cpp \
           $(SRC_DIR)/LoanAccount.cpp \
+          $(SRC_DIR)/MortgageAccount.cpp \
           $(SRC_DIR)/Globals.cpp \
           $(SRC_DIR)/Bank.cpp \
           $(SRC_DIR)/BondCalculator.cpp

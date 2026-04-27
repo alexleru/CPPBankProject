@@ -724,3 +724,36 @@ Before each build/deployment, verify:
 **Test Guide Version**: 1.0  
 **Last Updated**: April 12, 2026  
 **Maintainer**: QA Team
+
+
+---
+
+## Mortgage Feature Testing (menu option 18)
+
+The mortgage feature is implemented as `MortgageAccount`, a class that derives from `LoanAccount` and is registered in the same `AccountRegistry`. The C++03 `typedef`-rich API is the focal point of this feature.
+
+### Quick smoke test (interactive)
+
+1. Launch `./BankSystem` (or `BankSystem.exe`).
+2. Press Enter at the welcome screen.
+3. Menu 1 -> register a customer (note the `CUST00xxxx` ID).
+4. Menu 18 -> 1 -> open a mortgage:
+   - Customer ID = the one you just got.
+   - Address = any string.
+   - Market value = `500000`, Down payment = `100000`.
+   - Annual rate = `6`%, term = `30` years, kind = `1` (fixed).
+5. Menu 18 -> 4 -> verify LTV `80 %`, PMI `No`, monthly payment around `$3044.04`.
+6. Menu 18 -> 2 -> verify the 360-row amortisation schedule prints.
+7. Menu 18 -> 3 -> make a payment and re-check `Payments Made: 1 of 360`.
+
+### Scripted test cases
+
+See `TEST_CASES.md`, **Test Section 17**:
+
+- **TC-MORT-01** — Open a 30-year fixed mortgage at 80% LTV (no PMI).
+- **TC-MORT-02** — Mortgage at 90% LTV triggers PMI.
+- **TC-MORT-03** — Make a mortgage payment and confirm `monthsPaid` advances (joins `LoanAccount` flow).
+- **TC-MORT-04** — Interest-only mortgage builds a balloon-style schedule.
+- **TC-MORT-05** — Validation: down payment > market value is rejected, no account is registered.
+
+All five scenarios were executed against `BankSystem` via stdin redirection (`./BankSystem < tc_mort_NN_input.txt`) and pass.

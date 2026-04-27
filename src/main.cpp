@@ -3,6 +3,7 @@
 #include "../include/Constants.h"
 #include "../include/Globals.h"
 #include "../include/BondCalculator.h"
+#include "../include/MortgageAccount.h"
 #include <iostream>
 #include <string>
 #include <iomanip>
@@ -10,34 +11,26 @@
 #include <cstdlib>
 #include <stdexcept>
 
-// Initialize global variables
 void initializeApplication() {
     initializeGlobals();
 }
 
-// Global bank instance
 Bank globalBank(BANK_NAME);
 
-// Function to clear console screen (cross-platform)
 void clearScreen() {
-    // Use a more compatible clear method
     #ifdef _WIN32
         system("cls");
     #else
-        // Linux/Unix: Use system clear command for better compatibility
         system("clear");
     #endif
 }
 
-// Function to pause and wait for user input
 void pauseScreen() {
     std::cout << "\nPress Enter to continue...";
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
-// Function to display main menu
 void displayMainMenu() {
-    // Add some spacing instead of clearing screen
     std::cout << "\n\n";
     std::cout << "========================================\n";
     std::cout << "   " << BANK_NAME << "\n";
@@ -59,212 +52,154 @@ void displayMainMenu() {
     std::cout << "15. Admin/Debug Functions\n";
     std::cout << "16. Calculate Bond Parameters\n";
     std::cout << "17. Function Pointer Demo\n";
+    std::cout << "18. Open Mortgage Account / Mortgage Operations\n";
     std::cout << "0.  Exit\n";
     std::cout << "========================================\n";
     std::cout << "Enter your choice: ";
 }
 
-// Register new customer
 void registerCustomer() {
     clearScreen();
     std::cout << "=== REGISTER NEW CUSTOMER ===\n\n";
-    
     std::string firstName, lastName, email, phone, address;
-    
     std::cout << "Enter first name: ";
     std::cin.ignore();
     std::getline(std::cin, firstName);
-    
     std::cout << "Enter last name: ";
     std::getline(std::cin, lastName);
-    
     std::cout << "Enter email: ";
     std::getline(std::cin, email);
-    
     std::cout << "Enter phone number: ";
     std::getline(std::cin, phone);
-    
     std::cout << "Enter address: ";
     std::getline(std::cin, address);
-    
     if (globalBank.registerCustomer(firstName, lastName, email, phone, address)) {
         std::cout << "\nCustomer registered successfully!\n";
     } else {
         std::cerr << "\nFailed to register customer.\n";
     }
-    
     pauseScreen();
 }
 
-// Open new account
 void openNewAccount() {
     clearScreen();
     std::cout << "=== OPEN NEW ACCOUNT ===\n\n";
-    
     std::string customerId;
     std::cout << "Enter customer ID: ";
     std::cin >> customerId;
-    
-    // Verify customer exists
     if (!globalBank.findCustomer(customerId)) {
         std::cerr << "Customer not found!\n";
         pauseScreen();
         return;
     }
-    
     std::cout << "\nAccount Types:\n";
     std::cout << "1. Savings Account\n";
     std::cout << "2. Checking Account\n";
     std::cout << "3. Loan Account\n";
     std::cout << "Enter account type: ";
-    
     int typeChoice;
     std::cin >> typeChoice;
-    
     AccountType type;
     switch (typeChoice) {
-        case 1:
-            type = SAVINGS;
-            break;
-        case 2:
-            type = CHECKING;
-            break;
-        case 3:
-            type = LOAN;
-            break;
+        case 1: type = SAVINGS; break;
+        case 2: type = CHECKING; break;
+        case 3: type = LOAN; break;
         default:
             std::cerr << "Invalid account type!\n";
             pauseScreen();
             return;
     }
-    
-    double initialBalance = Utils::getValidatedAmount("Enter initial balance/amount: ");
-    
+    double initialBalance = Utils::getValidatedAmount("Enter initial balance/amount: ", true);
     Account* newAccount = globalBank.createAccount(customerId, type, initialBalance);
-    
     if (newAccount) {
         std::cout << "Account created successfully!\n";
     }
-    
     pauseScreen();
 }
 
-// Deposit funds
 void depositFunds() {
     clearScreen();
     std::cout << "=== DEPOSIT FUNDS ===\n\n";
-    
     std::string accountId;
     std::cout << "Enter account ID: ";
     std::cin >> accountId;
-    
     double amount = Utils::getValidatedAmount("Enter deposit amount: ");
-    
     if (globalBank.depositToAccount(accountId, amount)) {
         std::cout << "\nDeposit successful!\n";
     } else {
         std::cerr << "\nDeposit failed!\n";
     }
-    
     pauseScreen();
 }
 
-// Withdraw funds
 void withdrawFunds() {
     clearScreen();
     std::cout << "=== WITHDRAW FUNDS ===\n\n";
-    
     std::string accountId;
     std::cout << "Enter account ID: ";
     std::cin >> accountId;
-    
     double amount = Utils::getValidatedAmount("Enter withdrawal amount: ");
-    
     if (globalBank.withdrawFromAccount(accountId, amount)) {
         std::cout << "\nWithdrawal successful!\n";
     } else {
         std::cerr << "\nWithdrawal failed!\n";
     }
-    
     pauseScreen();
 }
 
-// Transfer between accounts
 void transferFunds() {
     clearScreen();
     std::cout << "=== TRANSFER BETWEEN ACCOUNTS ===\n\n";
-    
     std::string fromAccountId, toAccountId;
     std::cout << "Enter source account ID: ";
     std::cin >> fromAccountId;
-    
     std::cout << "Enter destination account ID: ";
     std::cin >> toAccountId;
-    
     double amount = Utils::getValidatedAmount("Enter transfer amount: ");
-    
     if (globalBank.transferBetweenAccounts(fromAccountId, toAccountId, amount)) {
         std::cout << "\nTransfer successful!\n";
     } else {
         std::cerr << "\nTransfer failed!\n";
     }
-    
     pauseScreen();
 }
 
-// View account statement
 void viewStatement() {
     clearScreen();
     std::cout << "=== VIEW ACCOUNT STATEMENT ===\n\n";
-    
     std::string accountId;
     std::cout << "Enter account ID: ";
     std::cin >> accountId;
-    
     globalBank.displayAccountStatement(accountId);
-    
     pauseScreen();
 }
 
-// View customer portfolio
 void viewPortfolio() {
     clearScreen();
     std::cout << "=== VIEW CUSTOMER PORTFOLIO ===\n\n";
-    
     std::string customerId;
     std::cout << "Enter customer ID: ";
     std::cin >> customerId;
-    
     globalBank.generateCustomerReport(customerId);
-    
     pauseScreen();
 }
 
-// Apply monthly processing
 void applyMonthlyProcessing() {
     clearScreen();
     std::cout << "=== APPLY MONTHLY PROCESSING ===\n\n";
-    
     globalBank.applyMonthlyProcessing();
-    
     pauseScreen();
 }
 
-// Calculate loan EMI
 void calculateLoanEMI() {
     clearScreen();
     std::cout << "=== CALCULATE LOAN EMI ===\n\n";
-    
     double principal = Utils::getValidatedAmount("Enter principal amount: ");
     double rate = Utils::getValidatedAmount("Enter annual interest rate (as percentage): ");
     int months = Utils::getValidatedInteger("Enter loan term (in months): ");
-    
-    // Convert percentage to decimal
     rate = rate / 100.0;
-    
     try {
         double emi = globalBank.calculateLoanEMI(principal, rate, months);
-        
         std::cout << "\n===============================================\n";
         std::cout << "LOAN EMI CALCULATION\n";
         std::cout << "===============================================\n";
@@ -275,87 +210,65 @@ void calculateLoanEMI() {
         std::cout << "Total Repayment: " << Utils::formatCurrency(emi * months) << std::endl;
         std::cout << "Total Interest: " << Utils::formatCurrency((emi * months) - principal) << std::endl;
         std::cout << "===============================================\n";
-        
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
-    
     pauseScreen();
 }
 
-// Search account by ID
 void searchAccountById() {
     clearScreen();
     std::cout << "=== SEARCH ACCOUNT BY ID ===\n\n";
-    
     std::string accountId;
     std::cout << "Enter account ID: ";
     std::cin >> accountId;
-    
     Account* account = globalBank.findAccount(accountId);
-    
     if (account) {
         std::cout << "\nAccount found:\n";
         account->displayAccountInfo();
     } else {
         std::cerr << "\nAccount not found!\n";
     }
-    
     pauseScreen();
 }
 
-// List all customers
 void listAllCustomers() {
     clearScreen();
     std::cout << "=== ALL CUSTOMERS ===\n\n";
-    
     globalBank.listAllCustomers();
-    
     pauseScreen();
 }
 
-// List all accounts
 void listAllAccounts() {
     clearScreen();
     std::cout << "=== ALL ACCOUNTS ===\n\n";
-    
     globalBank.listAllAccounts();
-    
     pauseScreen();
 }
 
-// Generate bank report
 void generateBankReport() {
     clearScreen();
     std::cout << "=== BANK REPORT ===\n\n";
-    
     globalBank.generateBankReport();
-    
     pauseScreen();
 }
 
-// Close account
 void closeAccount() {
     clearScreen();
     std::cout << "=== CLOSE ACCOUNT ===\n\n";
-    
     std::string accountId;
     std::cout << "Enter account ID to close: ";
     std::cin >> accountId;
-    
     Account* account = globalBank.findAccount(accountId);
-    
     if (account) {
         account->setIsActive(false);
         std::cout << "Account closed successfully!\n";
     } else {
         std::cerr << "Account not found!\n";
     }
-    
     pauseScreen();
 }
 
-// Admin/Debug functions menu
 void adminDebugFunctions() {
     clearScreen();
     std::cout << "=== ADMIN/DEBUG FUNCTIONS ===\n\n";
@@ -366,28 +279,19 @@ void adminDebugFunctions() {
     std::cout << "5. Force Close Account\n";
     std::cout << "6. Validate All Accounts\n";
     std::cout << "0. Back to Main Menu\n\n";
-    
     int choice;
     std::cout << "Enter your choice: ";
     std::cin >> choice;
-    
     switch (choice) {
-        case 1:
-            printGlobalStatistics();
-            break;
-        case 2:
-            debugBankInfo(globalBank);
-            break;
+        case 1: printGlobalStatistics(); break;
+        case 2: debugBankInfo(globalBank); break;
         case 3: {
             std::string customerId;
             std::cout << "Enter customer ID: ";
             std::cin >> customerId;
             const Customer* customer = globalBank.findCustomer(customerId);
-            if (customer) {
-                debugCustomerInfo(*customer);
-            } else {
-                std::cout << "Customer not found.\n";
-            }
+            if (customer) debugCustomerInfo(*customer);
+            else std::cout << "Customer not found.\n";
             break;
         }
         case 4: {
@@ -395,11 +299,8 @@ void adminDebugFunctions() {
             std::cout << "Enter account ID: ";
             std::cin >> accountId;
             Account* account = globalBank.findAccount(accountId);
-            if (account) {
-                debugAccountInfo(*account);
-            } else {
-                std::cout << "Account not found.\n";
-            }
+            if (account) debugAccountInfo(*account);
+            else std::cout << "Account not found.\n";
             break;
         }
         case 5: {
@@ -410,111 +311,141 @@ void adminDebugFunctions() {
             break;
         }
         case 6: {
-            // Validate all accounts using friend function
-            AccountList accounts = globalBank.getCustomerAccounts(""); // This won't work as expected
             std::cout << "Account validation feature would iterate through all accounts.\n";
             break;
         }
-        case 0:
-            return;
-        default:
-            std::cout << "Invalid choice.\n";
+        case 0: return;
+        default: std::cout << "Invalid choice.\n";
     }
-    
     pauseScreen();
 }
 
-// Calculate bond parameters (Present Value / Future Value / analysis report)
 void calculateBondParameters() {
     clearScreen();
     std::cout << "=== CALCULATE BOND PARAMETERS ===\n\n";
-    std::cout << "A bond is valued using a monthly coupon rate that has a\n";
-    std::cout << "fixed component and a random component (up to 3%).\n\n";
-
-    double nominal = Utils::getValidatedAmount("Enter bond nominal (face value): ");
-    int term = Utils::getValidatedInteger("Enter bond term (in months): ");
-    double fixedRatePct = Utils::getValidatedAmount(
-        "Enter FIXED monthly coupon rate (as percentage, e.g. 0.5 for 0.5%): ");
-    double maxRandomPct = Utils::getValidatedAmount(
-        "Enter MAX random monthly part (percentage, 0..3): ");
-    double discountRatePct = Utils::getValidatedAmount(
-        "Enter annual discount rate (as percentage, e.g. 5 for 5%): ");
-
-    if (maxRandomPct > 3.0) {
-        std::cout << "Random part capped at 3% as per specification.\n";
-        maxRandomPct = 3.0;
-    }
-
+    double nominal = Utils::getValidatedAmount("Enter bond nominal: ");
+    int term = Utils::getValidatedInteger("Enter bond term (months): ");
+    double fixedRatePct = Utils::getValidatedAmount("Enter fixed monthly coupon rate (%): ");
+    double maxRandomPct = Utils::getValidatedAmount("Enter max random monthly part (%, 0..3): ");
+    double discountRatePct = Utils::getValidatedAmount("Enter annual discount rate (%): ");
+    if (maxRandomPct > 3.0) maxRandomPct = 3.0;
     double fixedRate = fixedRatePct / 100.0;
     double maxRandomRate = maxRandomPct / 100.0;
     double discountRate = discountRatePct / 100.0;
-
     try {
-        BondCalculator calculator(nominal, term, fixedRate,
-                                  maxRandomRate, discountRate);
-        calculator.generateCashFlowSchedule();
-
-        double pv = calculator.calculatePresentValue();
-        double fv = calculator.calculateFutureValue();
-        double totalCoupons = calculator.calculateTotalCouponIncome();
-        double avgRate = calculator.calculateAverageCouponRate();
-
-        std::cout << "\n--- Quick summary ---\n";
-        std::cout << "Present Value       : " << Utils::formatCurrency(pv) << "\n";
-        std::cout << "Future Value        : " << Utils::formatCurrency(fv) << "\n";
-        std::cout << "Total coupon income : " << Utils::formatCurrency(totalCoupons) << "\n";
-        std::cout << "Avg monthly rate    : " << (avgRate * 100.0) << " %\n";
-
-        std::cout << "\nShow full analysis report? (y/n): ";
-        char ans = 'n';
-        std::cin >> ans;
-        if (ans == 'y' || ans == 'Y') {
-            calculator.generateBondAnalysisReport();
-        }
+        BondCalculator calc(nominal, term, fixedRate, maxRandomRate, discountRate);
+        calc.generateCashFlowSchedule();
+        std::cout << "PV: " << Utils::formatCurrency(calc.calculatePresentValue()) << "\n";
+        std::cout << "FV: " << Utils::formatCurrency(calc.calculateFutureValue()) << "\n";
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
-
     pauseScreen();
 }
 
-// ---------------------------------------------------------------------
-// Function pointer demo
-// ---------------------------------------------------------------------
-// A free function matching the signature expected by
-// Bank::applyToAllAccounts, i.e. double (*)(double).
-// This one gives every active account a 1% bonus.
-double applyOnePercentBonus(double balance) {
-    return balance * 1.01;
-}
-
-// Another matching rule: apply a flat $5 maintenance fee, floor at 0.
+double applyOnePercentBonus(double balance) { return balance * 1.01; }
 double applyFlatMaintenanceFee(double balance) {
-    double result = balance - 5.0;
-    return (result < 0) ? 0.0 : result;
+    double r = balance - 5.0;
+    return (r < 0) ? 0.0 : r;
 }
 
 void functionPointerDemo() {
     clearScreen();
     std::cout << "=== FUNCTION POINTER DEMO ===\n\n";
-
-    std::cout << "--- Utils::performOperation (int (*)(int, int)) ---\n";
-    // Passing the address of Utils::add
-    Utils::performOperation(5, 3, Utils::add);       // Result: 8
-    // Passing the address of Utils::multiply
-    Utils::performOperation(5, 3, Utils::multiply);  // Result: 15
-
-    std::cout << "\n--- Bank::applyToAllAccounts (double (*)(double)) ---\n";
-    std::cout << "Rule 1: +1% bonus to every active account\n";
+    Utils::performOperation(5, 3, Utils::add);
+    Utils::performOperation(5, 3, Utils::multiply);
     globalBank.applyToAllAccounts(applyOnePercentBonus);
-
-    std::cout << "\nRule 2: flat $5 maintenance fee on every active account\n";
     globalBank.applyToAllAccounts(applyFlatMaintenanceFee);
-
     pauseScreen();
 }
 
-// Display welcome message
+// =====================================================================
+// Mortgage menu - new feature joined with the loan account hierarchy
+// =====================================================================
+void mortgageMenu() {
+    clearScreen();
+    std::cout << "=== MORTGAGE OPERATIONS ===\n\n";
+    std::cout << "1. Open new mortgage account\n";
+    std::cout << "2. Show mortgage amortization schedule\n";
+    std::cout << "3. Make mortgage payment\n";
+    std::cout << "4. Show mortgage details (LTV, PMI, monthly payment)\n";
+    std::cout << "0. Back to main menu\n\n";
+
+    int choice = -1;
+    std::cout << "Enter your choice: ";
+    std::cin >> choice;
+    if (choice == 0) return;
+
+    if (choice == 1) {
+        std::string customerId;
+        std::cout << "Enter customer ID: ";
+        std::cin >> customerId;
+        if (!globalBank.findCustomer(customerId)) {
+            std::cerr << "Customer not found!\n";
+            pauseScreen();
+            return;
+        }
+        Property prop;
+        prop.id = static_cast<PropertyId>(std::time(NULL));
+        std::cout << "Enter property address: ";
+        std::cin.ignore();
+        std::getline(std::cin, prop.address);
+        prop.marketValue = Utils::getValidatedAmount("Enter property market value: ");
+        prop.downPayment = Utils::getValidatedAmount("Enter down payment: ", true);
+        Rate rate     = Utils::getValidatedAmount("Enter annual rate (percent): ") / 100.0;
+        TermInYears y = Utils::getValidatedInteger("Enter term in years: ");
+        std::cout << "Mortgage kind:\n  1) Fixed rate\n  2) ARM\n  3) Interest-only\nChoice: ";
+        int k = 1;
+        std::cin >> k;
+        MortgageKind kind = FIXED_RATE;
+        if (k == 2) kind = ADJUSTABLE_RATE;
+        else if (k == 3) kind = INTEREST_ONLY;
+        try {
+            MortgageAccount* m = globalBank.createMortgageAccount(customerId, prop, rate, y, kind);
+            if (m) m->displayAccountInfo();
+        } catch (const std::exception& e) {
+            std::cerr << "Mortgage creation failed: " << e.what() << "\n";
+        }
+    }
+    else if (choice == 2) {
+        std::string accountId;
+        std::cout << "Enter mortgage account ID: ";
+        std::cin >> accountId;
+        MortgageAccount* m = globalBank.findMortgageAccount(accountId);
+        if (!m) std::cerr << "Mortgage account not found!\n";
+        else m->displayAmortizationSchedule();
+    }
+    else if (choice == 3) {
+        std::string accountId;
+        std::cout << "Enter mortgage account ID: ";
+        std::cin >> accountId;
+        MortgageAccount* m = globalBank.findMortgageAccount(accountId);
+        if (!m) std::cerr << "Mortgage account not found!\n";
+        else {
+            Money expected = m->calculateTotalMonthlyPayment();
+            std::cout << "Expected total monthly payment: " << Utils::formatCurrency(expected) << "\n";
+            Money amount = Utils::getValidatedAmount("Enter payment amount: ");
+            try {
+                m->makeMortgagePayment(amount);
+            } catch (const std::exception& e) {
+                std::cerr << "Payment failed: " << e.what() << "\n";
+            }
+        }
+    }
+    else if (choice == 4) {
+        std::string accountId;
+        std::cout << "Enter mortgage account ID: ";
+        std::cin >> accountId;
+        MortgageAccount* m = globalBank.findMortgageAccount(accountId);
+        if (!m) std::cerr << "Mortgage account not found!\n";
+        else m->displayAccountInfo();
+    }
+    else {
+        std::cout << "Invalid choice.\n";
+    }
+    pauseScreen();
+}
+
 void displayWelcome() {
     clearScreen();
     std::cout << "\n";
@@ -523,98 +454,51 @@ void displayWelcome() {
     std::cout << "=========================================================\n";
     std::cout << "Version: " << VERSION << std::endl;
     std::cout << "Platform: " << PLATFORM_NAME << std::endl;
-    std::cout << "\nThis is a comprehensive bank account management system\n";
-    std::cout << "with support for Savings, Checking, and Loan accounts.\n";
     std::cout << "=========================================================\n\n";
-    
     pauseScreen();
 }
 
-// Main function - entry point
 int main() {
-    // Initialize global variables
     initializeApplication();
-    
-    // Display welcome screen
     displayWelcome();
-    
-    // Main program loop
     int choice = -1;
     bool running = true;
-    
     while (running) {
         displayMainMenu();
-        
         if (std::cin >> choice) {
             switch (choice) {
-                case 1:
-                    registerCustomer();
-                    break;
-                case 2:
-                    openNewAccount();
-                    break;
-                case 3:
-                    depositFunds();
-                    break;
-                case 4:
-                    withdrawFunds();
-                    break;
-                case 5:
-                    transferFunds();
-                    break;
-                case 6:
-                    viewStatement();
-                    break;
-                case 7:
-                    viewPortfolio();
-                    break;
-                case 8:
-                    applyMonthlyProcessing();
-                    break;
-                case 9:
-                    calculateLoanEMI();
-                    break;
-                case 10:
-                    searchAccountById();
-                    break;
-                case 11:
-                    listAllCustomers();
-                    break;
-                case 12:
-                    listAllAccounts();
-                    break;
-                case 13:
-                    generateBankReport();
-                    break;
-                case 14:
-                    closeAccount();
-                    break;
-                case 15:
-                    adminDebugFunctions();
-                    break;
-                case 16:
-                    calculateBondParameters();
-                    break;
-                case 17:
-                    functionPointerDemo();
-                    break;
+                case 1:  registerCustomer(); break;
+                case 2:  openNewAccount(); break;
+                case 3:  depositFunds(); break;
+                case 4:  withdrawFunds(); break;
+                case 5:  transferFunds(); break;
+                case 6:  viewStatement(); break;
+                case 7:  viewPortfolio(); break;
+                case 8:  applyMonthlyProcessing(); break;
+                case 9:  calculateLoanEMI(); break;
+                case 10: searchAccountById(); break;
+                case 11: listAllCustomers(); break;
+                case 12: listAllAccounts(); break;
+                case 13: generateBankReport(); break;
+                case 14: closeAccount(); break;
+                case 15: adminDebugFunctions(); break;
+                case 16: calculateBondParameters(); break;
+                case 17: functionPointerDemo(); break;
+                case 18: mortgageMenu(); break;
                 case 0:
                     running = false;
-                    std::cout << "\nThank you for using " << BANK_NAME << "!\n";
-                    std::cout << "Goodbye!\n\n";
+                    std::cout << "\nGoodbye!\n";
                     break;
                 default:
-                    std::cerr << "Invalid choice! Please try again.\n";
+                    std::cerr << "Invalid choice!\n";
                     pauseScreen();
             }
         } else {
-            // Handle invalid input
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::cerr << "Invalid input! Please enter a number.\n";
+            std::cerr << "Invalid input!\n";
             pauseScreen();
         }
     }
-    
     return 0;
 }
