@@ -1,18 +1,22 @@
 # Bank Customer Management System in C++
 
-A small C++ project implementing a bank customer management system with registration, validation, and listing.
+A small C++ project implementing a bank customer management system with
+registration, validation, and listing. The codebase intentionally exercises
+a wide spread of classic C++03 syntactic constructs (typedefs, struct/enum
+aliases, container & iterator aliases, function-pointer typedef, self-typedef,
+two-level inheritance, default arguments).
 
 ## Project Structure
 
 ```
 CPPBankProject/
 ├── include/                          # Header files
-│   ├── Constants.h                  # Typed constants
-│   ├── Enums.h                      # Enumeration types
-│   ├── Globals.h                    # Global variables and counters
-│   ├── Utils.h                      # Utility class declarations
-│   ├── Customer.h                   # Customer class
-│   └── Bank.h                       # Bank management class
+│   ├── Constants.h                  # Typed constants + CustomerId typedef
+│   ├── Enums.h                      # typedef enum CustomerStatus_ { ... } CustomerStatus
+│   ├── Globals.h                    # CustomerCounter typedef + global counter
+│   ├── Utils.h                      # Static utility class + BinaryIntOp typedef
+│   ├── Customer.h                   # Entity -> Person -> Customer + ContactInfo struct
+│   └── Bank.h                       # CustomerList / CustomerIter aliases
 ├── src/                             # Implementation files
 │   ├── main.cpp                     # Entry point with interactive menu
 │   ├── Globals.cpp                  # Global variable definitions
@@ -27,38 +31,61 @@ CPPBankProject/
 └── Makefile                         # Cross-platform build (GNU make / mingw32-make)
 ```
 
+## C++03 Language Constructs Showcased
+
+| Construct                              | Where it lives                                              |
+|----------------------------------------|-------------------------------------------------------------|
+| Semantic primitive typedef             | `Constants.h` (`CustomerId`), `Globals.h` (`CustomerCounter`) |
+| Struct alias (`typedef struct`)        | `Customer.h` (`ContactInfo`)                                |
+| Enum alias (`typedef enum`)            | `Enums.h` (`CustomerStatus`)                                |
+| Container alias                        | `Bank.h` (`CustomerList = std::vector<Customer::Ptr>`)      |
+| Iterator alias                         | `Bank.h` (`CustomerIter = CustomerList::const_iterator`)    |
+| Function-pointer typedef               | `Utils.h` (`BinaryIntOp = int (*)(int, int)`)               |
+| Self-typedef inside a class            | `Customer.h` (`typedef Customer Self; typedef Self* Ptr;`)  |
+| Two-level inheritance                  | `Entity` → `Person` → `Customer`                            |
+| Default arguments                      | `initializeGlobals(CustomerCounter = 1000)`, `Bank::registerCustomer(..., CustomerStatus = ACTIVE)`, `Customer` ctor |
+| Function-pointer parameter via typedef | `Utils::performOperation(int, int, BinaryIntOp)`            |
+
 ## Technical Features
 
 ### Object-Oriented Design
 - **Encapsulation**: Private member variables with public accessors
+- **Inheritance**: Two-level chain `Entity` → `Person` → `Customer` with a virtual destructor on the base
 - **Validation**: Input validation on customer registration
 - **Memory Management**: Raw pointers with manual cleanup in destructor
 
 ### Data Structures
-- **Vectors**: For storing customers (`std::vector<Customer*>`)
-- **Strings**: All data uses `std::string` for cross-platform compatibility
-- **Global State**: Shared counters and configuration via `Globals.h`
+- **Vectors via alias**: `typedef std::vector<Customer::Ptr> CustomerList;`
+- **Iterator via alias**: `typedef CustomerList::const_iterator CustomerIter;`
+- **Strings**: All textual data uses `std::string` for cross-platform compatibility
+- **Global State**: Shared counter (`CustomerCounter globalCustomerCounter`) via `Globals.h`
 
 ### Key Classes
 
-#### Customer
-- Stores personal info (name, email, phone, address)
-- Tracks status (`ACTIVE` / `INACTIVE`)
-- ID auto-generated via `Utils::generateCustomerId()`
-- Email and phone validation on `validate()`
+#### Entity (base)
+- Holds the `CustomerId customerId` member, virtual destructor, `getCustomerId()` accessor
+
+#### Person : public Entity
+- Adds `firstName` / `lastName` and accessors
+
+#### Customer : public Person
+- Declares `typedef Customer Self;` and `typedef Self* Ptr;` (self-typedef)
+- Stores a `ContactInfo` struct (email, phone, address) and `CustomerStatus`
+- Constructor takes a default `CustomerStatus status = ACTIVE`
+- `validate()` checks required fields, email and phone format
+- `display()` prints the full record
 
 #### Bank
-- Owns a `std::vector<Customer*>` (destructor frees all)
-- `registerCustomer()` — validates and adds a customer
-- `listCustomers()` — prints all registered customers
+- Owns a `CustomerList customers` (destructor frees all entries via `CustomerIter`)
+- `registerCustomer()` — validates and adds a customer, default `status = ACTIVE`
+- `listCustomers()` — iterates with `CustomerIter` and prints each customer
 - `getBankName()` — returns the bank name
 
 #### Utils (static methods only)
-- `generateCustomerId()` — generates unique `CUST` + 6-digit ID
-- `validateEmail()` — checks `@` and domain with TLD
-- `validatePhone()` — checks minimum 10 characters, digits/symbols only
-- `add(int, int)` / `multiply(int, int)` — sample arithmetic functions used by the function-pointer demo
-- `performOperation(int, int, int (*)(int, int))` — accepts a function pointer and applies it to two integers
+- `generateCustomerId()` returns a `CustomerId` (semantic typedef of `std::string`)
+- `validateEmail()` / `validatePhone()` — format checks
+- `add(int, int)` / `multiply(int, int)` — sample callbacks of type `BinaryIntOp`
+- `performOperation(int, int, BinaryIntOp)` — accepts a callback through the typedef
 
 ### Static Methods
 ```cpp
@@ -70,20 +97,42 @@ Utils::multiply(a, b)              // Sample callback: a * b
 Utils::performOperation(x, y, fn)  // Calls fn(x, y) and prints the result
 ```
 
-### Function Pointers as Parameters
+### Function-Pointer Typedef and Parameter
 
-`Utils::performOperation` demonstrates passing a function pointer as a parameter
-(`int (*operation)(int, int)`). Any function that matches this signature can be
-supplied as the callback:
+`Utils.h` defines the alias
+
+```cpp
+typedef int (*BinaryIntOp)(int, int);
+```
+
+`Utils::performOperation` then takes that alias as its parameter type:
+
+```cpp
+static void performOperation(int x, int y, BinaryIntOp operation);
+```
+
+Any function that matches `int(int, int)` can be supplied as the callback:
 
 ```cpp
 Utils::performOperation(5, 3, Utils::add);      // Result: 8
 Utils::performOperation(5, 3, Utils::multiply); // Result: 15
 ```
 
-### Enums (1 total, C++03 plain enum)
+### Enum Alias (C-style)
 ```cpp
-enum CustomerStatus { ACTIVE, INACTIVE }
+typedef enum CustomerStatus_ {
+    ACTIVE,
+    INACTIVE
+} CustomerStatus;
+```
+
+### Struct Alias (C-style)
+```cpp
+typedef struct ContactInfo_ {
+    std::string email;
+    std::string phone;
+    std::string address;
+} ContactInfo;
 ```
 
 ## Compilation & Build
@@ -140,27 +189,30 @@ g++ -std=c++03 -I./include \
 ### Core Functionality
 
 #### Customer Management
-- Register customers with first name, last name, email, phone, address
+- Register customers with first name, last name, and a `ContactInfo` struct
+  (email, phone, address). The `Bank::registerCustomer` signature uses a
+  default argument for status (`CustomerStatus status = ACTIVE`).
 - Email and phone validation on registration
 - Auto-generated unique customer ID (`CUST001000`, `CUST001001`, ...)
 - List all registered customers with their details and status
 
 #### Function Pointer Demo
-- Option 3 exercises `Utils::performOperation`, which takes a function pointer
-  as a parameter (`int (*operation)(int, int)`)
+- Option 3 exercises `Utils::performOperation`, which receives a callback
+  through the `BinaryIntOp` typedef
 - Passes `Utils::add` and `Utils::multiply` as callbacks
 - Prints `Result: 8` and `Result: 15`
 
 ## Code Statistics
 
 - **Total Files**: 11 (6 headers + 5 sources)
-- **Total Lines**: ~278
+- **Total Lines**: ~344
 - **C++ Standard**: C++03
 
 ## Design Patterns
 
 - **Encapsulation**: Private member variables with public accessors
-- **Separation of Concerns**: Utils, Bank, Customer classes with distinct responsibilities
+- **Inheritance**: Two-level chain (`Entity` → `Person` → `Customer`)
+- **Separation of Concerns**: `Utils`, `Bank`, `Customer` classes with distinct responsibilities
 - **Static Utility Class**: `Utils` with private constructor — not instantiable
 
 ## Usage Example
@@ -169,11 +221,16 @@ g++ -std=c++03 -I./include \
 // Create bank
 Bank bank("Small Bank System");
 
-// Register a customer
-std::string customerId, errorMsg;
-if (bank.registerCustomer("John", "Doe", "john@example.com",
-                          "123-456-7890", "123 Main St",
-                          customerId, errorMsg))
+// Build the contact info struct (typedef struct ContactInfo_ ... ContactInfo)
+ContactInfo info;
+info.email   = "john@example.com";
+info.phone   = "123-456-7890";
+info.address = "123 Main St";
+
+// Register a customer (CustomerStatus defaults to ACTIVE)
+CustomerId  customerId;
+std::string errorMsg;
+if (bank.registerCustomer("John", "Doe", info, customerId, errorMsg))
     std::cout << "ID: " << customerId << "\n"; // CUST001000
 
 // List all customers
@@ -190,7 +247,9 @@ bank.listCustomers();
 ## Notes
 
 - Constants defined as typed `const` variables in `Constants.h` (not `#define`)
-- Global counter managed through `Globals.h` / `Globals.cpp`
+- `CustomerId` is a semantic `typedef` of `std::string` (not a distinct type)
+- Global counter managed through `Globals.h` / `Globals.cpp` and uses the
+  `CustomerCounter` typedef
 - No external dependencies (pure C++ Standard Library)
 - Uses raw pointers with manual memory management (C++03 style)
 
@@ -199,15 +258,19 @@ bank.listCustomers();
 This project demonstrates:
 - Object-Oriented Programming (OOP) principles
 - Encapsulation and class design
-- STL containers (`vector`, `string`)
-- C++03 compatible patterns (raw pointers, plain enums)
+- Two-level inheritance with a virtual destructor
+- STL containers (`vector`, `string`) and STL iterators
+- C++03 compatible patterns (raw pointers, plain enums, `typedef`)
+- Semantic primitive, struct, enum, container, iterator, function-pointer,
+  and self-typedefs
+- Function pointers as parameters declared via a typedef (`BinaryIntOp`)
+- Default function arguments
 - Console I/O and input validation
-- Function pointers as parameters (`int (*operation)(int, int)`)
 - Cross-platform build with a single Makefile (GNU make / MinGW `mingw32-make`)
 
 ---
 
-**Version**: 2.0.0
+**Version**: 2.1.0
 **Date**: April 2026
 **Standard**: C++03
 **Platform**: Cross-Platform (Windows/Linux/macOS)

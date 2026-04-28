@@ -35,9 +35,12 @@
 
 ---
 
-## Constants (`include/Constants.h`)
+## Constants & Typedefs (`include/Constants.h`)
 
 ```cpp
+// Semantic primitive typedef
+typedef std::string CustomerId;
+
 const std::string BANK_NAME          = "Small Bank System";
 const std::string CUSTOMER_ID_PREFIX = "CUST";
 ```
@@ -55,7 +58,9 @@ To modify: edit `include/Constants.h` and rebuild with `make`.
 | Email | Yes | Must contain `@` and TLD |
 | Phone | Yes | Min 10 chars, digits/symbols |
 | Address | Yes | Non-empty |
-| Status | Auto | Set to `ACTIVE` on creation |
+| Status | Auto | Defaulted to `ACTIVE` (default ctor argument) |
+
+Email, phone, and address are bundled in the `ContactInfo` struct alias.
 
 ---
 
@@ -63,17 +68,24 @@ To modify: edit `include/Constants.h` and rebuild with `make`.
 
 ### Utils Class
 ```cpp
-static std::string generateCustomerId();            // "CUST001000"
+static CustomerId  generateCustomerId();            // "CUST001000"
 static bool        validateEmail(const std::string&);
 static bool        validatePhone(const std::string&);
 
 // Function-pointer demo helpers
 static int         add(int a, int b);               // a + b
 static int         multiply(int a, int b);          // a * b
-static void        performOperation(int x, int y, int (*operation)(int, int));
+
+// Receives a callback declared via the BinaryIntOp typedef
+static void        performOperation(int x, int y, BinaryIntOp operation);
 ```
 
-**Function pointer usage:**
+**Function-pointer typedef:**
+```cpp
+typedef int (*BinaryIntOp)(int, int);
+```
+
+**Function-pointer usage:**
 ```cpp
 Utils::performOperation(5, 3, Utils::add);      // Result: 8
 Utils::performOperation(5, 3, Utils::multiply); // Result: 15
@@ -84,18 +96,18 @@ Utils::performOperation(5, 3, Utils::multiply); // Result: 15
 ## Code Organization
 
 ### Include Files (`include/`)
-- `Constants.h` — Typed `const` system constants
-- `Enums.h` — `CustomerStatus` enum
-- `Globals.h` — Global counter (`globalCustomerCounter`)
-- `Utils.h` — Static utility methods
-- `Customer.h` — Customer class
-- `Bank.h` — Bank management class
+- `Constants.h` — Typed `const` system constants + `CustomerId` typedef
+- `Enums.h` — `typedef enum CustomerStatus_ { ... } CustomerStatus`
+- `Globals.h` — `CustomerCounter` typedef + global counter; `initializeGlobals` has a default argument
+- `Utils.h` — Static utility methods + `BinaryIntOp` function-pointer typedef
+- `Customer.h` — `ContactInfo` struct alias + `Entity` → `Person` → `Customer` chain + `Self`/`Ptr` self-typedefs
+- `Bank.h` — `CustomerList` (container alias) + `CustomerIter` (iterator alias) + default `CustomerStatus` parameter
 
 ### Source Files (`src/`)
 - `Globals.cpp` — Global variable definitions
 - `Utils.cpp` — Utility implementations
 - `Customer.cpp` — Customer management
-- `Bank.cpp` — Bank core logic
+- `Bank.cpp` — Bank core logic (uses `CustomerIter` to walk the list)
 - `main.cpp` — UI and entry point (4-option menu, includes function-pointer demo)
 
 ---
@@ -103,7 +115,21 @@ Utils::performOperation(5, 3, Utils::multiply); // Result: 15
 ## Enums
 
 ```cpp
-enum CustomerStatus { ACTIVE, INACTIVE }
+typedef enum CustomerStatus_ {
+    ACTIVE,
+    INACTIVE
+} CustomerStatus;
+```
+
+---
+
+## Inheritance Chain
+
+```
+Entity                      // virtual ~Entity(); CustomerId customerId
+  └── Person                // firstName, lastName
+        └── Customer        // ContactInfo contact; CustomerStatus status
+                            // typedef Customer Self; typedef Self* Ptr;
 ```
 
 ---
@@ -145,5 +171,5 @@ The Makefile auto-detects Windows via the `OS=Windows_NT` env var and swaps
 
 ---
 
-**Version**: 2.0
+**Version**: 2.1
 **Last Updated**: April 2026

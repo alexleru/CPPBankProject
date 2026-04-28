@@ -5,19 +5,24 @@
 #include <vector>
 #include "Customer.h"
 
+// Container alias + iterator alias
+typedef std::vector<Customer::Ptr>   CustomerList;
+typedef CustomerList::const_iterator CustomerIter;
+
 class Bank {
 private:
-    std::string bankName;
-    std::vector<Customer*> customers;
+    std::string  bankName;
+    CustomerList customers;
 
 public:
     Bank(const std::string& name);
     ~Bank();
 
+    // Default argument on the trailing CustomerStatus parameter
     bool registerCustomer(const std::string& firstName, const std::string& lastName,
-                          const std::string& email, const std::string& phone,
-                          const std::string& address,
-                          std::string& outCustomerId, std::string& errorMsg);
+                          const ContactInfo& contact,
+                          CustomerId& outCustomerId, std::string& errorMsg,
+                          CustomerStatus status = ACTIVE);
 
     void listCustomers() const;
     std::string getBankName() const;

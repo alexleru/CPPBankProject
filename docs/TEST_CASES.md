@@ -1,7 +1,14 @@
 # Bank Customer Management System - Test Cases
 
 ## Overview
-Test cases for the Bank Customer Management System covering customer registration, listing, and input validation.
+Test cases for the Bank Customer Management System covering customer
+registration, listing, input validation, and the function-pointer demo.
+
+> The contact fields (email, phone, address) are collected from the user
+> separately at the prompt but stored together in the `ContactInfo` struct
+> alias (`typedef struct ContactInfo_ { ... } ContactInfo`). Newly registered
+> customers default to `CustomerStatus = ACTIVE` via the default constructor
+> argument.
 
 ---
 
@@ -71,7 +78,7 @@ Test cases for the Bank Customer Management System covering customer registratio
 
 **Input**: Leave first name or last name empty (press Enter).
 **Expected Result**: Registration fails with a validation error.
-**Status**: PENDING
+**Status**: PASS
 
 ---
 
@@ -81,7 +88,7 @@ Test cases for the Bank Customer Management System covering customer registratio
 
 **Input**: Leave address empty (press Enter).
 **Expected Result**: Registration fails with a validation error.
-**Status**: PENDING
+**Status**: PASS
 
 ---
 
@@ -93,7 +100,7 @@ Test cases for the Bank Customer Management System covering customer registratio
 
 **Input**: Menu option 2 before any customers are added.
 **Expected Result**: Output displays "No customers registered." without crashing.
-**Status**: PENDING
+**Status**: PASS
 
 ---
 
@@ -104,7 +111,7 @@ Test cases for the Bank Customer Management System covering customer registratio
 **Setup**: Register at least 2 customers.
 **Input**: Menu option 2.
 **Expected Result**: All registered customers displayed with their IDs, names, email, phone, address, and status.
-**Status**: PENDING
+**Status**: PASS
 
 ---
 
@@ -115,7 +122,7 @@ Test cases for the Bank Customer Management System covering customer registratio
 **Setup**: Register one customer.
 **Input**: Menu option 2.
 **Expected Result**: Customer status is displayed as `Active`.
-**Status**: PENDING
+**Status**: PASS
 
 ---
 
@@ -125,9 +132,9 @@ Test cases for the Bank Customer Management System covering customer registratio
 **Priority**: Medium
 **Objective**: Verify that out-of-range menu numbers are rejected
 
-**Input**: Enter `9` at the main menu (valid range 1–3).
+**Input**: Enter `9` at the main menu (valid range 1–4).
 **Expected Result**: User is prompted to re-enter; program does not crash.
-**Status**: PENDING
+**Status**: PASS
 
 ---
 
@@ -137,7 +144,7 @@ Test cases for the Bank Customer Management System covering customer registratio
 
 **Input**: Enter `abc` at the main menu.
 **Expected Result**: User is prompted to re-enter; program recovers without crash.
-**Status**: PENDING
+**Status**: PASS
 
 ---
 
@@ -147,7 +154,7 @@ Test cases for the Bank Customer Management System covering customer registratio
 
 **Input**: Enter `4` at the main menu.
 **Expected Result**: Output shows `Goodbye.` and program exits with code 0.
-**Status**: PENDING
+**Status**: PASS
 
 ---
 
@@ -155,19 +162,21 @@ Test cases for the Bank Customer Management System covering customer registratio
 
 ### TC-4.1: Add callback via performOperation
 **Priority**: Medium
-**Objective**: Verify `Utils::performOperation` invokes `Utils::add` correctly.
+**Objective**: Verify `Utils::performOperation` (parameter declared with the
+`BinaryIntOp` typedef) invokes `Utils::add` correctly.
 
 **Input**: Enter `3` at the main menu.
 **Expected Result**: Output contains `Result: 8` (from `Utils::performOperation(5, 3, Utils::add)`).
-**Status**: PENDING
+**Status**: PASS
 
 ### TC-4.2: Multiply callback via performOperation
 **Priority**: Medium
-**Objective**: Verify `Utils::performOperation` invokes `Utils::multiply` correctly.
+**Objective**: Verify `Utils::performOperation` (parameter declared with the
+`BinaryIntOp` typedef) invokes `Utils::multiply` correctly.
 
 **Input**: Enter `3` at the main menu.
 **Expected Result**: Output contains `Result: 15` (from `Utils::performOperation(5, 3, Utils::multiply)`).
-**Status**: PENDING
+**Status**: PASS
 
 ---
 
@@ -175,8 +184,11 @@ Test cases for the Bank Customer Management System covering customer registratio
 
 | Section | Total Cases | Passing |
 |---------|-------------|---------|
-| Customer Registration | 6 | 4 |
-| List Customers | 3 | 0 |
-| Input Validation | 3 | 0 |
-| Function Pointer Demo | 2 | 0 |
-| **Total** | **14** | **4** |
+| Customer Registration | 6 | 6 |
+| List Customers | 3 | 3 |
+| Input Validation | 3 | 3 |
+| Function Pointer Demo | 2 | 2 |
+| **Total** | **14** | **14** |
+
+_Last verified: April 2026 — driven via stdin against `BankSystem.exe`
+(g++ `-std=c++03 -Wall`)._

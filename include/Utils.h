@@ -2,10 +2,14 @@
 #define UTILS_H
 
 #include <string>
+#include "Constants.h"
+
+// Function-pointer typedef
+typedef int (*BinaryIntOp)(int, int);
 
 class Utils {
 public:
-    static std::string generateCustomerId();
+    static CustomerId generateCustomerId();
     static bool validateEmail(const std::string& email);
     static bool validatePhone(const std::string& phone);
 
@@ -13,9 +17,8 @@ public:
     static int add(int a, int b);
     static int multiply(int a, int b);
 
-    // Function that takes a function pointer as a parameter
-    // Syntax: int (*operation)(int, int)
-    static void performOperation(int x, int y, int (*operation)(int, int));
+    // Function-pointer parameter declared via the BinaryIntOp typedef
+    static void performOperation(int x, int y, BinaryIntOp operation);
 
 private:
     Utils();

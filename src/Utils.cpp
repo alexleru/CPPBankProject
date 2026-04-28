@@ -8,16 +8,15 @@
 Utils::Utils() {}
 
 // Sample functions to be passed
-int Utils::add(int a, int b) { return a + b; }
+int Utils::add(int a, int b)      { return a + b; }
 int Utils::multiply(int a, int b) { return a * b; }
 
-// Function that takes a function pointer as a parameter
-// Syntax: int (*operation)(int, int)
-void Utils::performOperation(int x, int y, int (*operation)(int, int)) {
+// Receives a function pointer through the BinaryIntOp typedef
+void Utils::performOperation(int x, int y, BinaryIntOp operation) {
     std::cout << "Result: " << operation(x, y) << std::endl;
 }
 
-std::string Utils::generateCustomerId() {
+CustomerId Utils::generateCustomerId() {
     std::ostringstream oss;
     oss << CUSTOMER_ID_PREFIX << std::setfill('0') << std::setw(6) << globalCustomerCounter++;
     return oss.str();

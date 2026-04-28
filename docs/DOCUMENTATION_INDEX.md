@@ -5,9 +5,12 @@
 ### 1. README.md
 **Purpose**: Project overview and general information
 **Contents**:
-- Project structure (11 files: 6 headers + 5 sources)
+- Project structure (11 files: 6 headers + 5 sources, ~344 lines)
 - Technical features and OOP design
-- Key classes and relationships (`Bank`, `Customer`, `Utils`)
+- Catalog of C++03 syntactic constructs showcased (typedefs, struct/enum
+  aliases, container & iterator aliases, function-pointer typedef,
+  self-typedef, two-level inheritance, default arguments)
+- Key classes and the `Entity` → `Person` → `Customer` inheritance chain
 - Compilation instructions
 - Feature list and 4-option menu (includes function-pointer demo)
 - Cross-platform build (GNU make / `mingw32-make`)
@@ -21,11 +24,12 @@
 **Purpose**: Quick lookup and reference information
 **Contents**:
 - Menu options (4 options)
-- Customer field requirements
+- Customer field requirements (fields are bundled in the `ContactInfo` struct)
 - Validation rules (email, phone)
-- Constants from `Constants.h`
-- Static methods reference
-- Code organization
+- Constants and typedefs from `Constants.h` (`CustomerId`)
+- Static methods reference + `BinaryIntOp` function-pointer typedef
+- Code organization (typedef catalog per header)
+- Inheritance chain diagram (`Entity` → `Person` → `Customer`)
 - Troubleshooting
 
 **When to use**: Quick lookups, configuration changes, troubleshooting
@@ -61,6 +65,8 @@
 - ...the customer ID format? → QUICK_REFERENCE.md (Customer ID Format)
 - ...the validation rules? → QUICK_REFERENCE.md (Validation Rules)
 - ...an enum value? → QUICK_REFERENCE.md (Enums)
+- ...the inheritance chain? → QUICK_REFERENCE.md (Inheritance Chain)
+- ...the `BinaryIntOp` typedef? → QUICK_REFERENCE.md (Static Methods Reference)
 
 ### "Test Case for..."
 - ...customer registration → TEST_CASES.md (Section 1)

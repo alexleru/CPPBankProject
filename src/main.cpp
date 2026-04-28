@@ -33,22 +33,22 @@ static int readInt(const std::string& prompt, int min, int max) {
 
 static void demoFunctionPointers() {
     std::cout << "\n=== Function Pointer Demo ===\n";
-    // Passing the address of 'add'
-    Utils::performOperation(5, 3, Utils::add);      // Output: Result: 8
-    // Passing the address of 'multiply'
-    Utils::performOperation(5, 3, Utils::multiply); // Output: Result: 15
+    Utils::performOperation(5, 3, Utils::add);      // Result: 8
+    Utils::performOperation(5, 3, Utils::multiply); // Result: 15
 }
 
 static void createCustomer(Bank& bank) {
     std::cout << "\n=== Create Customer ===\n";
     std::string fn = readLine("First name : ");
     std::string ln = readLine("Last name  : ");
-    std::string em = readLine("Email      : ");
-    std::string ph = readLine("Phone      : ");
-    std::string ad = readLine("Address    : ");
+    ContactInfo info;
+    info.email   = readLine("Email      : ");
+    info.phone   = readLine("Phone      : ");
+    info.address = readLine("Address    : ");
 
-    std::string customerId, errorMsg;
-    if (bank.registerCustomer(fn, ln, em, ph, ad, customerId, errorMsg))
+    CustomerId  customerId;
+    std::string errorMsg;
+    if (bank.registerCustomer(fn, ln, info, customerId, errorMsg))
         std::cout << "Customer created successfully. ID: " << customerId << "\n";
     else
         std::cout << "Error: " << errorMsg << "\n";

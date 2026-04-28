@@ -160,7 +160,9 @@ Some Address
 ## Manual Test Checklist
 
 ### Customer Registration
-- [ ] Valid customer registers and receives a `CUST` ID
+- [ ] Valid customer registers and receives a `CUST` ID (`CustomerId` typedef of `std::string`)
+- [ ] `ContactInfo` fields (email, phone, address) are stored together
+- [ ] New customers default to `CustomerStatus::ACTIVE` (default ctor arg)
 - [ ] Invalid email is rejected with an error message
 - [ ] Invalid phone (< 10 chars) is rejected with an error message
 - [ ] Empty first or last name is rejected
@@ -180,6 +182,7 @@ Some Address
 ### Function Pointer Demo
 - [ ] `Utils::performOperation(5, 3, Utils::add)` prints `Result: 8`
 - [ ] `Utils::performOperation(5, 3, Utils::multiply)` prints `Result: 15`
+- [ ] Both callbacks are passed via the `BinaryIntOp` typedef parameter
 
 ---
 

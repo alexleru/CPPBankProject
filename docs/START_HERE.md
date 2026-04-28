@@ -68,7 +68,8 @@ make
 ```
 1 → Create a customer
 2 → List all customers
-3 → Exit
+3 → Function Pointer Demo (BinaryIntOp callbacks)
+4 → Exit
 ```
 
 ---

@@ -4,15 +4,15 @@
 Bank::Bank(const std::string& name) : bankName(name) {}
 
 Bank::~Bank() {
-    for (size_t i = 0; i < customers.size(); ++i)
-        delete customers[i];
+    for (CustomerIter it = customers.begin(); it != customers.end(); ++it)
+        delete *it;
 }
 
 bool Bank::registerCustomer(const std::string& fn, const std::string& ln,
-                             const std::string& email, const std::string& phone,
-                             const std::string& address,
-                             std::string& outId, std::string& errorMsg) {
-    Customer* c = new Customer(fn, ln, email, phone, address);
+                             const ContactInfo& info,
+                             CustomerId& outId, std::string& errorMsg,
+                             CustomerStatus status) {
+    Customer::Ptr c = new Customer(fn, ln, info, status);
     if (!c->validate(errorMsg)) {
         delete c;
         return false;
@@ -27,9 +27,10 @@ void Bank::listCustomers() const {
         std::cout << "No customers registered.\n";
         return;
     }
-    for (size_t i = 0; i < customers.size(); ++i) {
-        std::cout << "\n--- Customer " << (i + 1) << " ---\n";
-        customers[i]->display();
+    int idx = 0;
+    for (CustomerIter it = customers.begin(); it != customers.end(); ++it) {
+        std::cout << "\n--- Customer " << (++idx) << " ---\n";
+        (*it)->display();
     }
     std::cout << "\nTotal: " << customers.size() << " customer(s).\n";
 }
