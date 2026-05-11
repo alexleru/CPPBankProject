@@ -8,7 +8,8 @@
 │  1. Create Customer          (Customer Management)   │
 │  2. List Customers           (Reporting)             │
 │  3. Function Pointer Demo    (Callback example)      │
-│  4. Exit                     (Terminate)             │
+│  4. Verify Age (21+)         (Native library)        │
+│  5. Exit                     (Terminate)             │
 │                                                      │
 └──────────────────────────────────────────────────────┘
 ```
@@ -93,6 +94,46 @@ Utils::performOperation(5, 3, Utils::multiply); // Result: 15
 
 ---
 
+## Native Age Verification (Menu Option 4)
+
+Cross-platform shared library loaded at runtime via `LoadLibrary`
+(Windows) or `dlopen` (Linux). The host wrapper picks the correct binary
+at compile time:
+
+```cpp
+#if defined(_WIN32)
+    "native\\windows\\age_verifier.dll"
+#elif defined(__linux__)
+    "native/linux/libage_verifier.so"
+#endif
+```
+
+**Native C ABI** ([native/include/age_verifier.h](../native/include/age_verifier.h)):
+```c
+int verify_age_21(int day, int month, int year);
+//  1  → age >= 21
+//  0  → age <  21
+// -1  → invalid calendar date
+```
+
+**Host wrapper** ([include/AgeVerifier.h](../include/AgeVerifier.h)) maps
+the return codes to `AgeVerifier::Result` and surfaces load/symbol errors
+via `lastError()`.
+
+**Input prompts** at the menu:
+| Prompt | Range |
+|--------|-------|
+| Day    | 1–31  |
+| Month  | 1–12  |
+| Year   | 1900–2100 |
+
+Out-of-range calendar combinations (e.g. `30/2/2000`, `31/4/2020`) pass
+the per-field range check and are rejected by the native library.
+
+Build instructions and extension guidance: [NATIVE_LIBRARY.md](NATIVE_LIBRARY.md).
+
+---
+
 ## Code Organization
 
 ### Include Files (`include/`)
@@ -108,7 +149,14 @@ Utils::performOperation(5, 3, Utils::multiply); // Result: 15
 - `Utils.cpp` — Utility implementations
 - `Customer.cpp` — Customer management
 - `Bank.cpp` — Bank core logic (uses `CustomerIter` to walk the list)
-- `main.cpp` — UI and entry point (4-option menu, includes function-pointer demo)
+- `AgeVerifier.cpp` — RAII wrapper that dynamically loads the native library (`LoadLibrary`/`dlopen`)
+- `main.cpp` — UI and entry point (5-option menu, function-pointer demo + native age verification)
+
+### Native Library (`native/`)
+- `include/age_verifier.h` — C ABI shared by library and host
+- `src/age_verifier.cpp` — cross-platform implementation
+- `windows/age_verifier.dll`, `linux/libage_verifier.so` — built artifacts (per OS)
+- `windows/build.bat`, `linux/build.sh` — standalone build scripts
 
 ---
 
@@ -168,8 +216,9 @@ The Makefile auto-detects Windows via the `OS=Windows_NT` env var and swaps
 | Won't compile | Compiler too old | Use GCC 4.x+ or Clang |
 | Validation keeps failing | Email/phone format | Check against patterns above |
 | No customers in list | None registered yet | Use option 1 to create a customer first |
+| Option 4 says "Native library unavailable" | DLL/`.so` missing | Run `make native` (or the platform build script under `native/`) and re-launch from the project root |
 
 ---
 
-**Version**: 2.1
-**Last Updated**: April 2026
+**Version**: 2.2
+**Last Updated**: May 2026

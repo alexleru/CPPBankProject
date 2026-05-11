@@ -16,18 +16,33 @@ CPPBankProject/
 │   ├── Globals.h                    # CustomerCounter typedef + global counter
 │   ├── Utils.h                      # Static utility class + BinaryIntOp typedef
 │   ├── Customer.h                   # Entity -> Person -> Customer + ContactInfo struct
-│   └── Bank.h                       # CustomerList / CustomerIter aliases
+│   ├── Bank.h                       # CustomerList / CustomerIter aliases
+│   └── AgeVerifier.h                # Dynamic-loading wrapper for the native lib
 ├── src/                             # Implementation files
 │   ├── main.cpp                     # Entry point with interactive menu
 │   ├── Globals.cpp                  # Global variable definitions
 │   ├── Utils.cpp                    # Utility function implementations
 │   ├── Customer.cpp                 # Customer class implementation
-│   └── Bank.cpp                     # Bank logic implementation
+│   ├── Bank.cpp                     # Bank logic implementation
+│   └── AgeVerifier.cpp              # LoadLibrary/dlopen + symbol resolution
+├── native/                          # Cross-platform native library
+│   ├── include/age_verifier.h       # Public C ABI (extern "C")
+│   ├── src/age_verifier.cpp         # Shared implementation
+│   ├── windows/                     # age_verifier.dll lives here at runtime
+│   │   └── build.bat                # Standalone Windows build script
+│   └── linux/                       # libage_verifier.so lives here at runtime
+│       └── build.sh                 # Standalone Linux build script
 ├── docs/                            # Documentation
-│   └── README.md                    # This file
+│   ├── README.md                    # This file
+│   ├── NATIVE_LIBRARY.md            # Native library architecture & build
+│   ├── QUICK_REFERENCE.md           # Menu / ABI / validation cheatsheet
+│   ├── TEST_CASES.md                # Human-readable test cases
+│   ├── TESTING_GUIDE.md             # Manual scenarios + checklist
+│   └── TC_SPEC.md                   # Machine-readable spec for run_tests.py
 ├── build/                           # Build artifacts (created by make)
 │   └── *.o                         # Object files
 ├── BankSystem(.exe)                 # Compiled executable (.exe on Windows)
+├── run_tests.py                     # Automated harness (reads docs/TC_SPEC.md)
 └── Makefile                         # Cross-platform build (GNU make / mingw32-make)
 ```
 
@@ -183,7 +198,8 @@ g++ -std=c++03 -I./include \
 1. Create Customer
 2. List Customers
 3. Function Pointer Demo
-4. Exit
+4. Verify Age (21+, native library)
+5. Exit
 ```
 
 ### Core Functionality
@@ -202,11 +218,23 @@ g++ -std=c++03 -I./include \
 - Passes `Utils::add` and `Utils::multiply` as callbacks
 - Prints `Result: 8` and `Result: 15`
 
+#### Native Age Verification (21+)
+- Option 4 loads a small cross-platform shared library at runtime
+  (`native/windows/age_verifier.dll` on Windows, `native/linux/libage_verifier.so`
+  on Linux) via `LoadLibrary` / `dlopen`
+- The host wrapper [`AgeVerifier`](../include/AgeVerifier.h) picks the
+  binary at compile time using `_WIN32` / `__linux__`
+- Reads numeric `day / month / year`, compares against the system date,
+  prints `Result: TRUE` (≥ 21), `Result: FALSE` (< 21), or
+  `Invalid date` for impossible calendar combinations
+- See [NATIVE_LIBRARY.md](NATIVE_LIBRARY.md) for the ABI, build steps,
+  and extension guidance
+
 ## Code Statistics
 
-- **Total Files**: 11 (6 headers + 5 sources)
-- **Total Lines**: ~344
 - **C++ Standard**: C++03
+- Application: 6 headers + 6 sources under `include/` and `src/`
+- Native library: 1 header + 1 source under `native/` plus per-OS build scripts
 
 ## Design Patterns
 

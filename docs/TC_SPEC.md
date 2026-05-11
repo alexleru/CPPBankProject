@@ -28,6 +28,14 @@ share lines with the next field's input.
    written to `logs/test_run_<YYYY-MM-DD_HH-MM-SS>.log`. Exit code is `0` on
    all-pass, `1` on any failure.
 
+> Menu: option 5 exits. Tests therefore end with `5` (and the menu-range
+> error message reads "Enter a number between 1 and 5.").
+>
+> The native age-verification cases (TC-5.*) require the shared library to
+> exist at `native/windows/age_verifier.dll` (Windows) or
+> `native/linux/libage_verifier.so` (Linux). `make` (or `mingw32-make`)
+> builds it automatically.
+
 ---
 
 ## TC-1.1: Register Valid Customer
@@ -41,7 +49,7 @@ john.doe@example.com
 123-456-7890
 123 Main Street
 2
-4
+5
 ```
 
 ### expected stdout
@@ -67,7 +75,7 @@ Doe
 not-an-email
 555-123-4567
 Some Address
-4
+5
 ```
 
 ### expected stdout
@@ -88,7 +96,7 @@ Doe
 jane@example.com
 123
 Some Address
-4
+5
 ```
 
 ### expected stdout
@@ -122,7 +130,7 @@ carol@bank.com
 555-987-6543
 300 Third Blvd
 2
-4
+5
 ```
 
 ### expected stdout
@@ -149,7 +157,7 @@ Doe
 jane@example.com
 555-123-4567
 Some Address
-4
+5
 ```
 
 ### expected stdout
@@ -170,7 +178,7 @@ Doe
 jane@example.com
 555-123-4567
 
-4
+5
 ```
 
 ### expected stdout
@@ -186,7 +194,7 @@ Goodbye.
 ### commands
 ```
 2
-4
+5
 ```
 
 ### expected stdout
@@ -214,7 +222,7 @@ bob@bank.com
 555-123-4567
 200 Second St
 2
-4
+5
 ```
 
 ### expected stdout
@@ -240,7 +248,7 @@ alice@bank.com
 123-456-7890
 100 First Ave
 2
-4
+5
 ```
 
 ### expected stdout
@@ -256,12 +264,12 @@ Goodbye.
 ### commands
 ```
 9
-4
+5
 ```
 
 ### expected stdout
 ```
-Enter a number between 1 and 4.
+Enter a number between 1 and 5.
 Goodbye.
 ```
 
@@ -272,22 +280,22 @@ Goodbye.
 ### commands
 ```
 abc
-4
+5
 ```
 
 ### expected stdout
 ```
-Enter a number between 1 and 4.
+Enter a number between 1 and 5.
 Goodbye.
 ```
 
 ---
 
-## TC-3.3: Exit via Option 4
+## TC-3.3: Exit via Option 5
 
 ### commands
 ```
-4
+5
 ```
 
 ### expected stdout
@@ -302,7 +310,7 @@ Goodbye.
 ### commands
 ```
 3
-4
+5
 ```
 
 ### expected stdout
@@ -319,12 +327,108 @@ Goodbye.
 ### commands
 ```
 3
-4
+5
 ```
 
 ### expected stdout
 ```
 === Function Pointer Demo ===
 Result: 15
+Goodbye.
+```
+
+---
+
+## TC-5.1: Age Verification — Adult Returns TRUE
+
+> Native library loaded via `LoadLibrary` / `dlopen`; birth date entered as
+> `day / month / year`. Anyone born `1/1/1990` is well over 21 for the
+> foreseeable life of this test.
+
+### commands
+```
+4
+1
+1
+1990
+5
+```
+
+### expected stdout
+```
+=== Age Verification (21+) ===
+Loaded native library:
+Result: TRUE  -- age is 21 or older.
+Goodbye.
+```
+
+---
+
+## TC-5.2: Age Verification — Minor Returns FALSE
+
+> Born `1/1/2020`: turns 21 on `2041-01-01`. Stays under 21 for the
+> foreseeable life of this test.
+
+### commands
+```
+4
+1
+1
+2020
+5
+```
+
+### expected stdout
+```
+=== Age Verification (21+) ===
+Loaded native library:
+Result: FALSE -- age is below 21.
+Goodbye.
+```
+
+---
+
+## TC-5.3: Age Verification — Invalid Date (Feb 30)
+
+> February never has 30 days; the native library returns
+> `AGE_VERIFIER_BAD_INPUT (-1)` and the host prints the invalid-date message.
+
+### commands
+```
+4
+30
+2
+2000
+5
+```
+
+### expected stdout
+```
+=== Age Verification (21+) ===
+Loaded native library:
+Invalid date (not a real calendar day).
+Goodbye.
+```
+
+---
+
+## TC-5.4: Age Verification — Invalid Date (April 31)
+
+> April only has 30 days; the native library rejects the date.
+
+### commands
+```
+4
+31
+4
+2020
+5
+```
+
+### expected stdout
+```
+=== Age Verification (21+) ===
+Loaded native library:
+Invalid date (not a real calendar day).
 Goodbye.
 ```

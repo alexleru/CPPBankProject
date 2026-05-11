@@ -29,6 +29,15 @@ Welcome to the **Bank Customer Management System** documentation.
    - Manual test procedures
    - Test scenarios with input sequences
 
+### 5. **NATIVE_LIBRARY.md**
+   Cross-platform native age-verification library
+   - Public C ABI (`verify_age_21`)
+   - Build via Makefile or per-OS scripts
+   - How `_WIN32` / `__linux__` selects the binary at compile time
+
+### 6. **TC_SPEC.md**
+   Machine-readable test spec consumed by `run_tests.py`
+
 ---
 
 ## Quick Navigation by Use Case
@@ -69,9 +78,16 @@ make
 1 → Create a customer
 2 → List all customers
 3 → Function Pointer Demo (BinaryIntOp callbacks)
-4 → Exit
+4 → Verify Age (21+) — loads a native DLL/.so at runtime
+5 → Exit
 ```
+
+### Step 4: Run the automated tests (1 min)
+```bash
+python run_tests.py
+```
+Reads [TC_SPEC.md](TC_SPEC.md) and runs every TC-1.* … TC-5.* case.
 
 ---
 
-*Last Updated: April 2026*
+*Last Updated: May 2026*

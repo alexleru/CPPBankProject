@@ -2,6 +2,7 @@
 #include "../include/Globals.h"
 #include "../include/Constants.h"
 #include "../include/Utils.h"
+#include "../include/AgeVerifier.h"
 #include <iostream>
 #include <string>
 #include <limits>
@@ -37,6 +38,37 @@ static void demoFunctionPointers() {
     Utils::performOperation(5, 3, Utils::multiply); // Result: 15
 }
 
+static void verifyAge() {
+    std::cout << "\n=== Age Verification (21+) ===\n";
+    AgeVerifier verifier;
+    if (!verifier.isLoaded()) {
+        std::cout << "Native library unavailable: " << verifier.lastError() << "\n"
+                  << "Expected at: " << verifier.libraryPath() << "\n";
+        return;
+    }
+    std::cout << "Loaded native library: " << verifier.libraryPath() << "\n"
+              << "Enter birth date (numbers only).\n";
+    int day   = readInt("Day   (1-31)   : ", 1, 31);
+    int month = readInt("Month (1-12)   : ", 1, 12);
+    int year  = readInt("Year  (1900-2100): ", 1900, 2100);
+
+    AgeVerifier::Result r = verifier.verify(day, month, year);
+    switch (r) {
+        case AgeVerifier::AGE_OK:
+            std::cout << "Result: TRUE  -- age is 21 or older.\n";
+            break;
+        case AgeVerifier::AGE_UNDER:
+            std::cout << "Result: FALSE -- age is below 21.\n";
+            break;
+        case AgeVerifier::AGE_BAD_INPUT:
+            std::cout << "Invalid date (not a real calendar day).\n";
+            break;
+        case AgeVerifier::AGE_LIB_ERROR:
+            std::cout << "Native library error: " << verifier.lastError() << "\n";
+            break;
+    }
+}
+
 static void createCustomer(Bank& bank) {
     std::cout << "\n=== Create Customer ===\n";
     std::string fn = readLine("First name : ");
@@ -64,13 +96,15 @@ int main() {
         std::cout << "\n1. Create Customer\n"
                   << "2. List Customers\n"
                   << "3. Function Pointer Demo\n"
-                  << "4. Exit\n";
-        int choice = readInt("Select (1-4): ", 1, 4);
+                  << "4. Verify Age (21+, native library)\n"
+                  << "5. Exit\n";
+        int choice = readInt("Select (1-5): ", 1, 5);
         switch (choice) {
             case 1: createCustomer(bank); break;
             case 2: bank.listCustomers(); break;
             case 3: demoFunctionPointers(); break;
-            case 4: std::cout << "Goodbye.\n"; return 0;
+            case 4: verifyAge(); break;
+            case 5: std::cout << "Goodbye.\n"; return 0;
         }
     }
 }
