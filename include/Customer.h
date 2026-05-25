@@ -1,79 +1,40 @@
 #ifndef CUSTOMER_H
 #define CUSTOMER_H
 
-#include <string>
 #include <vector>
-#include "Enums.h"
-#include "Account.h"
+#include <string>
+#include "Constants.h"
 
-// Forward declaration
-class Account;
+class Bank;     // SCC C peer (non-owning back-pointer)
+class Account;  // SCC A — back-references close the mega-SCC
+class Loan;     // SCC C peer
 
-// Type aliases for better readability
-typedef std::vector<Account*> AccountList;
-
-// Customer class
+// Owns its Account* and Loan*. Holds a non-owning Bank* back-pointer
+// which closes part of the mega-SCC.
 class Customer {
 private:
-    std::string customerId;
-    std::string firstName;
-    std::string lastName;
-    std::string email;
-    std::string phoneNumber;
-    std::string address;
-    CustomerStatus status;
-    time_t registrationDate;
-    AccountList accounts;
+    CustomerId             id;
+    std::string            firstName;
+    std::string            lastName;
+    std::vector<Account*>  accounts;  // owning
+    std::vector<Loan*>     loans;     // owning
+    Bank*                  owner;     // non-owning
 
 public:
-    // Constructor
-    Customer(const std::string& firstName, const std::string& lastName,
-             const std::string& email, const std::string& phone, const std::string& address);
-
-    // Destructor
+    Customer(const CustomerId& id,
+             const std::string& firstName,
+             const std::string& lastName,
+             Bank* owner);
     ~Customer();
 
-    // Getters
-    std::string getCustomerId() const;
-    std::string getFirstName() const;
-    std::string getLastName() const;
-    std::string getEmail() const;
-    std::string getPhoneNumber() const;
-    std::string getAddress() const;
-    CustomerStatus getStatus() const;
-    time_t getRegistrationDate() const;
-    int getAccountCount() const;
+    void addAccount(Account* a);
+    void addLoan(Loan* l);
 
-    // Setters
-    void setFirstName(const std::string& name);
-    void setLastName(const std::string& name);
-    void setEmail(const std::string& email);
-    void setPhoneNumber(const std::string& phone);
-    void setAddress(const std::string& addr);
-    void setStatus(CustomerStatus newStatus);
-
-    // Account management
-    Account* addAccount(Account* account);
-    Account* getAccount(int index) const;
-    Account* getAccountById(const std::string& accountId) const;
-    bool canAddAccount() const;
-    bool removeAccount(const std::string& accountId);
-
-    // Validation and operations
-    bool validate() const;
-    void display() const;
-    void displayPortfolio() const;
-
-    // Friend functions for external access to private data
-    friend void debugCustomerInfo(const Customer& customer);
-    friend bool validateCustomerData(const Customer& customer);
-    friend void updateCustomerStatus(Customer& customer, CustomerStatus newStatus);
-    friend AccountList getCustomerAccounts(const Customer& customer);
-
-private:
-    // Helper method to generate customer ID
-    static std::string generateCustomerId();
-    static int customerCounter;
+    const CustomerId&            getId()        const;
+    std::string                  getFullName()  const;
+    Bank*                        getOwner()     const;
+    const std::vector<Account*>& getAccounts()  const;
+    const std::vector<Loan*>&    getLoans()     const;
 };
 
-#endif // CUSTOMER_H
+#endif

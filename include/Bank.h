@@ -1,74 +1,45 @@
 #ifndef BANK_H
 #define BANK_H
 
-#include <string>
 #include <vector>
-#include <map>
-#include "Customer.h"
-#include "Account.h"
-#include "MortgageAccount.h"
+#include <string>
+#include "Constants.h"
 
-typedef std::vector<Customer> CustomerList;
-typedef std::map<std::string, Account*> AccountRegistry;
-typedef std::vector<Account*> AccountList;
+// Forward declarations of SCC C peers. Full definitions live in their
+// own headers; .cpp completes the includes to form the dependency cycle.
+class Customer;
+class BranchManager;
+class AuditLogger;
+class NotificationCenter;
 
+// Aggregate root for SCC C.
+// Ownership:
+//   - customers (vector) : owned (delete in dtor)
+//   - managers  (vector) : owned (delete in dtor)
+//   - logger             : owned (delete in dtor)
+//   - notificationCenter : owned (delete in dtor)
 class Bank {
 private:
-    std::string bankName;
-    CustomerList customers;
-    AccountRegistry accountRegistry;
+    std::string                  name;
+    std::vector<Customer*>       customers;
+    std::vector<BranchManager*>  managers;
+    AuditLogger*                 logger;
+    NotificationCenter*          notificationCenter;
 
 public:
     Bank(const std::string& name);
     ~Bank();
 
-    bool registerCustomer(const std::string& firstName, const std::string& lastName,
-                         const std::string& email, const std::string& phone,
-                         const std::string& address);
-    Customer* findCustomer(const std::string& customerId);
-    const Customer* findCustomer(const std::string& customerId) const;
-    void listAllCustomers() const;
-    int getCustomerCount() const;
+    void registerCustomer(Customer* c);
+    void addBranchManager(BranchManager* m);
+    void setAuditLogger(AuditLogger* l);
+    void setNotificationCenter(NotificationCenter* nc);
 
-    Account* createAccount(const std::string& customerId,
-                           AccountType type, double initialBalance,
-                           double additionalParam = 0.0);
-    Account* findAccount(const std::string& accountId) const;
-    void searchAccounts(const std::string& customerId) const;
-    AccountList getCustomerAccounts(const std::string& customerId) const;
-    void listAllAccounts() const;
-
-    bool depositToAccount(const std::string& accountId, double amount);
-    bool withdrawFromAccount(const std::string& accountId, double amount);
-    bool transferBetweenAccounts(const std::string& fromAccountId,
-                                const std::string& toAccountId, double amount);
-
-    void generateCustomerReport(const std::string& customerId) const;
-    void generateBankReport() const;
-    void applyMonthlyProcessing();
-    void displayAccountStatement(const std::string& accountId) const;
-
-    void applyToAllAccounts(double (*rule)(double));
-
-    double calculateLoanEMI(double principal, double rate, int months) const;
-
-    // Mortgage operations - joins Mortgage with Loan account hierarchy.
-    MortgageAccount* createMortgageAccount(const std::string& customerId,
-                                           const Property&    property,
-                                           Rate               annualRate,
-                                           TermInYears        years,
-                                           MortgageKind       kind = FIXED_RATE);
-    MortgageAccount* findMortgageAccount(const std::string& accountId) const;
-
-    void displayBankInfo() const;
-
-    friend void debugBankInfo(const Bank& bank);
-    friend CustomerList getAllCustomers(const Bank& bank);
-    friend AccountRegistry getAccountRegistry(const Bank& bank);
-    friend void forceCloseAccount(Bank& bank, const std::string& accountId);
-
-private:
-    int findCustomerIndex(const std::string& customerId) const;
+    const std::string&                  getName()                const;
+    AuditLogger*                        getAuditLogger()         const;
+    NotificationCenter*                 getNotificationCenter()  const;
+    const std::vector<Customer*>&       getCustomers()           const;
+    const std::vector<BranchManager*>&  getBranchManagers()      const;
 };
 
 #endif

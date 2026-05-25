@@ -1,72 +1,21 @@
 #include "../include/Transaction.h"
-#include "../include/Utils.h"
-#include "../include/Globals.h"
-#include <iostream>
-#include <iomanip>
-#include <sstream>
+#include "../include/Account.h"
 
-// Initialize static counter
-int Transaction::transactionCounter = 10000;
+Transaction::Transaction(Account* src, Account* dst, Money amt)
+    : source(src), dest(dst), amount(amt), sequence(0),
+      timestamp(std::time(NULL)) {}
 
-// Constructor - creates a new transaction with unique ID
-Transaction::Transaction(TransactionType type, double amount, const std::string& description)
-    : transactionId(generateTransactionId()),
-      type(type),
-      amount(amount),
-      timestamp(std::time(NULL)),
-      status(COMPLETED),
-      description(description) {
-    // Increment global statistics
-    totalTransactionsProcessed++;
+Transaction::~Transaction() {}
+
+void Transaction::apply() {
+    // SCC A back-edge: invoke Account methods.
+    if (source) source->debit(amount);
+    if (dest)   dest->credit(amount);
 }
 
-// Private method to generate unique transaction ID
-std::string Transaction::generateTransactionId() {
-    std::ostringstream oss;
-    oss << "TXN" << std::setfill('0') << std::setw(8) << (globalTransactionCounter++);
-    return oss.str();
-}
-
-// Getters
-std::string Transaction::getTransactionId() const {
-    return transactionId;
-}
-
-TransactionType Transaction::getType() const {
-    return type;
-}
-
-double Transaction::getAmount() const {
-    return amount;
-}
-
-time_t Transaction::getTimestamp() const {
-    return timestamp;
-}
-
-TransactionStatus Transaction::getStatus() const {
-    return status;
-}
-
-std::string Transaction::getDescription() const {
-    return description;
-}
-
-// Setters
-void Transaction::setStatus(TransactionStatus newStatus) {
-    status = newStatus;
-}
-
-void Transaction::setDescription(const std::string& newDescription) {
-    description = newDescription;
-}
-
-// Display transaction details in formatted output
-void Transaction::display() const {
-    std::cout << std::left << std::setw(15) << transactionId
-              << std::setw(15) << Utils::transactionTypeToString(type)
-              << std::setw(12) << Utils::formatCurrency(amount)
-              << std::setw(20) << Utils::formatDate(timestamp)
-              << std::setw(12) << Utils::transactionStatusToString(status)
-              << std::setw(20) << description << std::endl;
-}
+Account*    Transaction::getSource()    const { return source; }
+Account*    Transaction::getDest()      const { return dest; }
+Money       Transaction::getAmount()    const { return amount; }
+int         Transaction::getSequence()  const { return sequence; }
+void        Transaction::setSequence(int s)   { sequence = s; }
+std::time_t Transaction::getTimestamp() const { return timestamp; }

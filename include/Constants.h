@@ -1,6 +1,14 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+#include <string>
+
+// Primitive aliases used across SCC A/C
+typedef double      Money;
+typedef std::string AccountId;
+typedef std::string LoanId;
+typedef std::string CustomerId;
+
 // Bank Information
 #define BANK_NAME "National C++ Bank"
 #define VERSION "1.0.0"

@@ -3,7 +3,7 @@
 
 # Compiler settings
 CXX      = g++
-CXXFLAGS = -std=c++03 -I./include
+CXXFLAGS = -std=c++03 -Wall -Wextra -I./include
 LDFLAGS  =
 
 # Directories
@@ -27,16 +27,28 @@ endif
 # Source files
 SOURCES = $(SRC_DIR)/main.cpp \
           $(SRC_DIR)/Utils.cpp \
-          $(SRC_DIR)/Customer.cpp \
+          $(SRC_DIR)/Globals.cpp \
+          $(SRC_DIR)/BondCalculator.cpp \
           $(SRC_DIR)/Transaction.cpp \
           $(SRC_DIR)/Account.cpp \
-          $(SRC_DIR)/SavingsAccount.cpp \
-          $(SRC_DIR)/CheckingAccount.cpp \
-          $(SRC_DIR)/LoanAccount.cpp \
-          $(SRC_DIR)/MortgageAccount.cpp \
-          $(SRC_DIR)/Globals.cpp \
+          $(SRC_DIR)/TransactionVisitor.cpp \
+          $(SRC_DIR)/Deposit.cpp \
+          $(SRC_DIR)/Withdrawal.cpp \
+          $(SRC_DIR)/Transfer.cpp \
+          $(SRC_DIR)/LoanPayment.cpp \
+          $(SRC_DIR)/LoggingVisitor.cpp \
           $(SRC_DIR)/Bank.cpp \
-          $(SRC_DIR)/BondCalculator.cpp
+          $(SRC_DIR)/Customer.cpp \
+          $(SRC_DIR)/Loan.cpp \
+          $(SRC_DIR)/AuditLogger.cpp \
+          $(SRC_DIR)/NotificationCenter.cpp \
+          $(SRC_DIR)/BranchManager.cpp \
+          $(SRC_DIR)/RiskAnalyzer.cpp \
+          $(SRC_DIR)/ReportEngine.cpp \
+          $(SRC_DIR)/ReportFilter.cpp \
+          $(SRC_DIR)/ReportSection.cpp \
+          $(SRC_DIR)/ReportFormatter.cpp \
+          $(SRC_DIR)/ReportWriter.cpp
 
 # Object files (placed in BUILD_DIR)
 OBJECTS = $(SOURCES:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)

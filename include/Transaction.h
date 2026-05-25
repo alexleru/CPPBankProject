@@ -1,43 +1,41 @@
 #ifndef TRANSACTION_H
 #define TRANSACTION_H
 
-#include <string>
 #include <ctime>
-#include "Enums.h"
+#include "Constants.h"
 
-// Transaction class to represent a single transaction
+// Forward declaration of the SCC A partner.
+class Account;
+
+// SCC A base. Concrete: holds Account* source/dest and implements apply()
+// by calling Account::debit / Account::credit. This closes the SCC A
+// cycle (Account ↔ Transaction).
+//
+// NOTE: accept(TransactionVisitor&) is intentionally NOT declared here.
+// Declaring it would add a Transaction → TransactionVisitor edge and
+// collapse SCC B (Visitor cycle) into the mega-SCC. Visitor dispatch
+// lives only on the concrete subclasses Deposit/Withdrawal/Transfer/
+// LoanPayment.
 class Transaction {
-private:
-    std::string transactionId;
-    TransactionType type;
-    double amount;
-    time_t timestamp;
-    TransactionStatus status;
-    std::string description;
+protected:
+    Account*    source;
+    Account*    dest;
+    Money       amount;
+    int         sequence;
+    std::time_t timestamp;
 
 public:
-    // Constructor
-    Transaction(TransactionType type, double amount, const std::string& description);
+    Transaction(Account* src, Account* dst, Money amt);
+    virtual ~Transaction();
 
-    // Getters
-    std::string getTransactionId() const;
-    TransactionType getType() const;
-    double getAmount() const;
-    time_t getTimestamp() const;
-    TransactionStatus getStatus() const;
-    std::string getDescription() const;
+    virtual void apply();
 
-    // Setters
-    void setStatus(TransactionStatus newStatus);
-    void setDescription(const std::string& newDescription);
-
-    // Display
-    void display() const;
-
-private:
-    // Private method for generating transaction ID
-    static std::string generateTransactionId();
-    static int transactionCounter;
+    Account*    getSource()    const;
+    Account*    getDest()      const;
+    Money       getAmount()    const;
+    int         getSequence()  const;
+    void        setSequence(int s);
+    std::time_t getTimestamp() const;
 };
 
-#endif // TRANSACTION_H
+#endif

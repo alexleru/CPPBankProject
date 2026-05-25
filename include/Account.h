@@ -1,70 +1,52 @@
 #ifndef ACCOUNT_H
 #define ACCOUNT_H
 
-#include <string>
 #include <vector>
-#include "Enums.h"
-#include "Transaction.h"
+#include <string>
+#include "Constants.h"
 
-// Type aliases for better readability
-typedef std::vector<Transaction> TransactionHistory;
+// Forward declarations
+class Transaction;   // SCC A partner: owned in history vector
+class Customer;      // SCC C: non-owning back-pointer (forms mega-SCC)
+class Bank;          // SCC C: non-owning back-pointer (forms mega-SCC)
+class AuditLogger;   // SCC C: non-owning observer (forms mega-SCC)
 
-// Abstract base class for all account types
+// Owns its transactions (deletes them in dtor).
+// Back-pointers to Customer/Bank/AuditLogger are non-owning.
 class Account {
-protected:
-    std::string accountId;
-    AccountType type;
-    double balance;
-    TransactionHistory transactionHistory;
-    time_t createdDate;
-    time_t lastModifiedDate;
-    bool isActive;
+private:
+    AccountId                  accountId;
+    Money                      balance;
+    std::vector<Transaction*>  history;   // owning
+
+    Customer*                  holder;    // non-owning (SCC C link)
+    Bank*                      bank;      // non-owning (SCC C link)
+    AuditLogger*               logger;    // non-owning (SCC C link)
 
 public:
-    // Constructor
-    Account(AccountType accountType, double initialBalance);
+    Account(const AccountId& id, Money initialBalance,
+            Customer* holder, Bank* bank, AuditLogger* logger);
+    ~Account();
 
-    // Destructor
-    virtual ~Account();
+    // SCC A reciprocity: records transaction & numbers it.
+    void addTransaction(Transaction* t);
+    // Called by Transaction::apply() in SCC A.
+    void debit(Money amt);
+    void credit(Money amt);
 
-    // Pure virtual methods
-    virtual AccountType getAccountType() const = 0;
-    virtual void applyMonthlyProcessing() = 0;
+    Money              getBalance()  const;
+    const AccountId&   getId()       const;
+    Customer*          getHolder()   const;
+    Bank*              getBank()     const;
+    AuditLogger*       getLogger()   const;
 
-    // Virtual methods
-    virtual void deposit(double amount, const std::string& description = "Deposit");
-    virtual bool withdraw(double amount, const std::string& description = "Withdrawal");
-    virtual void printStatement() const;
+    const std::vector<Transaction*>& getHistory() const;
 
-    // Getters
-    std::string getAccountId() const;
-    double getBalance() const;
-    bool getIsActive() const;
-    time_t getCreatedDate() const;
-    const TransactionHistory& getTransactionHistory() const;
-
-    // Setters
-    void setIsActive(bool active);
-
-    // Static methods
-    static double getInterestForType(AccountType type);
-    static std::string typeToString(AccountType type);
-
-    // Transaction management
-    void addTransaction(const Transaction& transaction);
-
-    // Display account information
-    virtual void displayAccountInfo() const;
-
-    // Friend functions for external access to private data
-    friend void debugAccountInfo(const Account& account);
-    friend bool validateAccountBalance(const Account& account);
-    friend void forceBalanceUpdate(Account& account, double newBalance);
-    friend TransactionHistory getAccountTransactions(const Account& account);
-
-protected:
-    // Protected method to format balance display
-    std::string formatBalance() const;
+    // Setters used during late wiring (Customer creates Account, then Bank
+    // assigns logger after construction).
+    void setHolder(Customer* c);
+    void setBank(Bank* b);
+    void setLogger(AuditLogger* l);
 };
 
-#endif // ACCOUNT_H
+#endif
