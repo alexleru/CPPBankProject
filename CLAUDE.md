@@ -2,74 +2,107 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## What this project is
+
+A deliberate fixture for the `java_cpp_chunkagent` plugin (C++ → Java/Spring converter). The dependency graph is engineered so that a chunker analysing `#include`s and method-call edges finds **exactly three cyclic strongly-connected components**, of curated sizes and tiers. The bank-domain code is incidental — the SCC topology is the point.
+
+See `docs/SCC_DEMO_LAYOUT.md` for the authoritative description of the three SCCs, edges, and the SCC D isolation invariant. See `docs/SCC_DEMO_PROJECT_PROMPT.md` for the original spec that drove the layout.
+
 ## Build & Run
 
-The project uses a single hand-written Makefile (no CMake, no test framework). It is cross-platform aware (`OS=Windows_NT` branch picks `.exe` and `cmd /C mkdir`).
+Single hand-written cross-platform Makefile (no CMake, no test framework).
 
 ```bash
-make            # builds ./BankSystem (or BankSystem.exe on Windows MinGW)
+make            # builds ./BankSystem (BankSystem.exe on Windows MinGW)
 make clean      # removes build/ and the executable
-./BankSystem    # launches the interactive menu
+./BankSystem    # 3-option interactive menu
 ```
 
-Manual compile (no Make):
+Manual compile:
 
 ```bash
-g++ -std=c++03 -I./include -o BankSystem src/*.cpp
+g++ -std=c++03 -Wall -Wextra -I./include -o BankSystem src/*.cpp
 ```
 
-If you add a new `.cpp` under `src/`, also append it to the explicit `SOURCES` list in the `Makefile` — it does not glob.
+If you add a new `.cpp` under `src/`, append it to the explicit `SOURCES` list in the `Makefile` — it does not glob.
 
 ## C++03 is a hard constraint
 
-The codebase deliberately targets **C++03** (compiled with `-std=c++03`). Do not introduce C++11+ features when editing. Specifically, do not use:
+Compiled with `-std=c++03 -Wall -Wextra`, zero warnings. Do not introduce C++11+ features:
 
-- `nullptr` (use `NULL`)
-- `auto`, range-based `for`
-- `using` type aliases (use `typedef`)
-- `std::unique_ptr` / `std::shared_ptr` (raw `new`/`delete`, container-owned objects, or `Account*` in `AccountRegistry`)
-- scoped enums (`enum class`), `override`, `final`, `noexcept`, lambdas, `std::function`
+- `nullptr` → use `NULL`
+- `auto`, range-based `for` → use explicit iterators
+- `using` type aliases → use `typedef`
+- `std::unique_ptr` / `std::shared_ptr` → raw `new`/`delete`, owners documented in headers
+- `enum class`, `override`, `final`, `noexcept`, lambdas, `std::function` → forbidden
 
-This constraint is explicit in `MortgageAccount.h` and is the whole reason this codebase exists — it is a study for porting C++03 idioms to Java. If you would naturally reach for a C++11 idiom, prefer the C++03 equivalent that's already used elsewhere in the file (function pointers instead of `std::function`, `typedef` instead of `using`, etc.).
+The whole point of this codebase is studying C++03 → Java porting, so the dialect is load-bearing.
 
-## Architecture
+## Architecture: four SCCs
 
-Three roughly independent subsystems share `main.cpp` as the menu dispatcher and `globalBank` as a process-wide singleton.
+| SCC | Members | Size | Files |
+|---|---|---|---|
+| **A** (Account ↔ Transaction) | `Account`, `Transaction` | 2 | merges into mega-SCC via Account back-pointers |
+| **C** (mediator/observer mesh) | `Bank`, `Customer`, `Loan`, `AuditLogger`, `NotificationCenter`, `BranchManager`, `RiskAnalyzer` | 7 | merges with A → mega-SCC of 9 |
+| **B** (Visitor) | `TransactionVisitor`, `Deposit`, `Withdrawal`, `Transfer`, `LoanPayment` | 5 | separate SCC; concrete `LoggingVisitor` is acyclic |
+| **D** (Reporting pipeline) | `ReportEngine`, `ReportFilter`, `ReportSection`, `ReportFormatter`, `ReportWriter` | 5 | **fully isolated** from A/B/C |
 
-**1. Account hierarchy (`Account.h` + 4 subclasses).** `Account` is abstract with two pure virtuals: `getAccountType()` and `applyMonthlyProcessing()`. Concrete subclasses: `SavingsAccount`, `CheckingAccount`, `LoanAccount`, and `MortgageAccount : public LoanAccount` (a two-level hierarchy — `Bank::findMortgageAccount` uses `dynamic_cast` to safely downcast). Each subclass owns its monthly-processing rule (interest, fee, EMI). Accounts hold their own `TransactionHistory` (a `typedef`'d `std::vector<Transaction>`).
+**Acyclic baseline** (Tier-A in chunker terms): `Utils`, `Globals`, `Constants`, `Enums`, `BondCalculator`, `LoggingVisitor`.
 
-**2. `Bank` (the aggregate root).** Owns `CustomerList customers` (vector) and `AccountRegistry accountRegistry` (`std::map<std::string, Account*>`). The map owns the heap-allocated accounts and frees them in `~Bank()`. Customer registration, account creation, deposits/withdrawals/transfers, monthly processing, and reports all flow through `Bank`. `Bank::transferBetweenAccounts` uses `try`/`throw;` (bare rethrow) to roll back the source-side credit if the destination side fails — preserve this pattern when editing transfer-like flows.
+### Why SCC B does NOT merge into the mega-SCC
 
-**3. `BondCalculator` (standalone).** Self-contained valuation module under `BondCalculator.{h,cpp}`. Not part of the account hierarchy. Drives menu option 16. Uses `std::rand` (C++03-safe) seeded via `std::time`.
+`Transaction` (mega-SCC) does **not** declare `accept(TransactionVisitor&)` and does **not** reference `TransactionVisitor`. Only the four concrete subclasses do. The inheritance edge `Deposit → Transaction` (etc.) is one-way. If you ever move `accept()` up to the base, SCC B collapses into the mega-SCC and the demo breaks.
 
-**Globals.** `Globals.h` declares `extern` counters and config flags (`globalCustomerCounter`, `enableDebugLogging`, …) that are defined exactly once in `Globals.cpp` and initialized via `initializeGlobals()` from `main`. `main.cpp` also declares `Bank globalBank(BANK_NAME);` as a file-scope global. Treat these as the project's "singletons."
+### Why SCC D must stay isolated
 
-**Friend functions for admin/debug.** Headers declare free-function `friend`s like `debugAccountInfo`, `validateAccountBalance`, `forceBalanceUpdate`, `getAccountTransactions`, `forceCloseAccount`. These are intentional back-doors used by menu option 15 ("Admin/Debug Functions") — they bypass normal validation. Don't replace them with public getters/setters; the friend pattern is part of what the codebase is demonstrating.
+No header or `.cpp` under SCC D may name any class from SCC A/B/C. Verify with:
 
-**Function-pointer strategy hooks.** Three places intentionally take raw function pointers (the C++03 stand-in for `std::function`):
+```bash
+grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer' \
+    include/Report*.h src/Report*.cpp
+# expected: no output
+```
 
-- `Utils::performOperation(int, int, int (*)(int, int))` — demo only.
-- `Bank::applyToAllAccounts(double (*rule)(double))` — walks the registry, applies the rule to each active balance.
-- `MortgageAccount::applyMortgageRule(MortgageRule)` (typedef `Money (*MortgageRule)(Money)`).
+If anything matches, the isolation invariant is broken and the chunker will fuse SCC D into the mega-SCC.
 
-These are wired to menu option 17. They exist to be ported to Java functional interfaces and should stay as raw function pointers in C++.
+## Ownership map
 
-**Typedef-heavy mortgage module.** `MortgageAccount.h` deliberately aliases primitives (`Money`, `Rate`, `TermInYears`, `PropertyId`), containers (`AmortizationSchedule`, `BalanceTimeline`), iterators, and the function-pointer type. Use these aliases consistently when extending mortgage code — that's the point of the module.
+`delete bank;` in `main.cpp` must cascade through the entire object graph without leaks or double-frees. Preserve this when editing:
+
+| Owner | Owns |
+|---|---|
+| `Bank` | `vector<Customer*>`, `vector<BranchManager*>`, `AuditLogger*`, `NotificationCenter*` |
+| `Customer` | `vector<Account*>`, `vector<Loan*>` |
+| `Account` | `vector<Transaction*>` |
+| `BranchManager` | `RiskAnalyzer*` |
+| `ReportEngine` | `ReportFilter*`, `ReportWriter*` |
+| `ReportWriter` | `ReportFormatter*` |
+
+Everything else is a non-owning back-pointer.
+
+## Globals
+
+`Globals.h` declares extern counters and config flags (`globalCustomerCounter`, `enableDebugLogging`, …) defined once in `Globals.cpp` and initialised via `initializeGlobals()` from `main`. They are present but lightly used by the new SCC scenarios.
+
+## `main.cpp` menu
+
+Three options, all exit with `0`:
+
+1. **New bank flow** — exercises the mega-SCC end-to-end: creates `Bank` + mediators, registers customers, opens accounts, runs `Deposit`/`Withdrawal`/`Transfer`/`LoanPayment` through both `apply()` and `LoggingVisitor`, approves a `Loan` via `BranchManager`, broadcasts via `NotificationCenter`, dumps the audit log, then `delete bank;` (cascade).
+2. **Generate report** — exercises SCC D: builds the engine/filter/formatter/writer pipeline, calls `engine->generate(std::cout)`, cascade-deletes via `delete engine;`.
+3. **Calculate bond parameters** — drives `BondCalculator` (acyclic baseline).
 
 ## Testing
 
-There is **no unit-test framework**. Testing is exercising the interactive console. Two paths:
-
-- Manual: `./BankSystem` and follow `docs/TESTING_GUIDE.md` / `docs/TEST_CASES.md` (61 documented cases organized into 7 scripted scenarios).
-- Scripted: pipe a sequence of menu choices/answers into stdin. The Testing Guide lists the keystroke sequences for each scenario (e.g. `./BankSystem < test_scenario_a.txt`).
-
-If you change menu numbering or prompts, the scripted scenarios in `docs/TESTING_GUIDE.md` will silently desync — update them in the same change.
+There is no unit-test framework. Testing is scripting stdin into the interactive console. See `docs/TESTING_GUIDE.md` for the 3 scripted scenarios (one per menu option). The dependency-graph topology itself is also a test target — see `docs/SCC_DEMO_LAYOUT.md` for the expected shape.
 
 ## Documentation map
 
-- `docs/README.md` — project overview, full feature list, build steps (duplicates some of this file but in more detail).
-- `docs/QUICK_REFERENCE.md` — menu options, validation rules, formulas, configuration constants.
-- `docs/TEST_CASES.md` — 61 numbered test cases organized by feature.
-- `docs/TESTING_GUIDE.md` — 7 scenario scripts + Python automation harness.
-- `CPP_Language_Constructs.md` — inventory of every C++03 construct used (useful when wondering "is X idiomatic here?").
-- `CPP_Reports_Comparison.md` — meta-doc comparing this codebase's dialect to another project; not load-bearing for development.
+- `docs/SCC_DEMO_LAYOUT.md` — **load-bearing**: 3-SCC diagram, edge inventory, isolation invariant for SCC D.
+- `docs/SCC_DEMO_PROJECT_PROMPT.md` — original Russian spec.
+- `docs/README.md` — project overview and build steps.
+- `docs/QUICK_REFERENCE.md` — class taxonomy + menu options.
+- `docs/TEST_CASES.md` — test cases organised per menu scenario.
+- `docs/TESTING_GUIDE.md` — scripted stdin sequences for each scenario.
+- `CPP_Language_Constructs.md` — inventory of every C++03 construct used (helpful when wondering "is X idiomatic here?").
+- `CPP_Reports_Comparison.md` — meta-doc; not load-bearing.
