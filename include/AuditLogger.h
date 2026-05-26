@@ -2,6 +2,7 @@
 #define AUDIT_LOGGER_H
 
 #include <vector>
+#include <map>
 #include <string>
 #include <iosfwd>
 
@@ -17,6 +18,12 @@ class AuditLogger {
 private:
     std::vector<std::string> entries;
     Bank*                    bank;
+
+    // Event-type histogram. Exercises std::map iteration / find / insert
+    // and pairs cleanly with the unsigned-long counter shown in
+    // TransactionBase: every entry recorded here is counted in an
+    // unsigned-long bucket.
+    std::map<std::string, unsigned long> eventCounts;
 
 public:
     AuditLogger();
@@ -35,6 +42,16 @@ public:
 
     const std::vector<std::string>& getEntries() const;
     void dump(std::ostream& out) const;
+
+    // Renders the eventCounts map as a small summary block.
+    void dumpEventSummary(std::ostream& out) const;
+
+    // Looks up the count for an event type. Returns 0 if absent.
+    unsigned long getEventCount(const std::string& eventType) const;
+
+private:
+    // Centralised increment so every recorded event lands in the map.
+    void recordEvent(const std::string& eventType);
 };
 
 #endif

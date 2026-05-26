@@ -50,9 +50,11 @@ The whole point of this codebase is studying C++03 → Java porting, so the dial
 | **B** (Visitor) | `TransactionVisitor`, `Deposit`, `Withdrawal`, `Transfer`, `LoanPayment` | 5 | separate SCC; concrete `LoggingVisitor` is acyclic |
 | **D** (Reporting pipeline) | `ReportEngine`, `ReportFilter`, `ReportSection`, `ReportFormatter`, `ReportWriter` | 5 | **fully isolated** from A/B/C |
 
-**Acyclic baseline** (Tier-A in chunker terms): `Utils`, `Globals`, `Constants`, `Enums`, `BondCalculator`, `LoggingVisitor`, `AgeVerifier`.
+**Acyclic baseline** (Tier-A in chunker terms): `Utils`, `Globals`, `Constants`, `Enums`, `BondCalculator`, `LoggingVisitor`, `AgeVerifier`, `TransactionBase`.
 
 `AgeVerifier` (`include/AgeVerifier.h`, `src/AgeVerifier.cpp`) is a thin RAII wrapper around the cross-platform `age_verifier` native library under `native/` (loaded at runtime via `LoadLibrary` / `dlopen`). It references no SCC A/B/C/D class and must stay that way — keep the wrapper isolated so it never gets pulled into the mega-SCC.
+
+`TransactionBase` (`include/TransactionBase.h`, `src/TransactionBase.cpp`) is an acyclic parent of `Transaction` that owns a process-wide `unsigned long instanceCounter` and gives every transaction a unique `instanceId`. Its sole purpose is to give the project a real 3-level inheritance chain `Deposit/Withdrawal/Transfer/LoanPayment → Transaction → TransactionBase` without introducing a new cycle. It references nothing in SCC A/B/C/D — keep it that way.
 
 ### Why SCC B does NOT merge into the mega-SCC
 
@@ -100,7 +102,7 @@ Four options, all exit with `0`:
 
 ## Testing
 
-There is no unit-test framework. Testing is scripting stdin into the interactive console. See `docs/TESTING_GUIDE.md` for the 3 scripted scenarios (one per menu option). The dependency-graph topology itself is also a test target — see `docs/SCC_DEMO_LAYOUT.md` for the expected shape.
+There is no unit-test framework. Testing is scripting stdin into the interactive console. See `docs/TESTING_GUIDE.md` for the 4 scripted scenarios (one per menu option). The dependency-graph topology itself is also a test target — see `docs/SCC_DEMO_LAYOUT.md` for the expected shape.
 
 ## Documentation map
 

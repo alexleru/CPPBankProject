@@ -1,6 +1,6 @@
 # Test Cases — SCC Demo
 
-The interactive console exposes three menu options. Each is a scripted
+The interactive console exposes four menu options. Each is a scripted
 scenario; this file lists pass criteria per scenario. The actual stdin
 sequences live in `TESTING_GUIDE.md`.
 
@@ -56,7 +56,43 @@ After `Deposit($1000)` to `A1001`, `Transfer($250)` from `A1001→A1002`, and `L
 | A2001 (Bob/Chk)   | $400.00 |
 | Loan L0001 outstanding | $4800.00 |
 
-### TC-1.5: Cascade delete is clean
+### TC-1.5: Audit-event summary
+
+**Expected**: after the regular audit dump, a block of the form
+
+```
+[AUDIT SUMMARY] 4 event type(s):
+  - ACCOUNT_CREATED : 3
+  - CUSTOMER_REGISTERED : 2
+  - LOAN_APPROVED : 2
+  - LOG : 4
+```
+
+prints. Exact counts depend on the scenario script; the
+`AuditLogger::notify` path is not hit by this scenario, so `NOTIFY`
+does not appear here. Exercises `std::map<std::string, unsigned
+long>::find` / `operator[]` / `const_iterator` iteration in
+`AuditLogger::dumpEventSummary`.
+
+### TC-1.6: `dynamic_cast` breakdown of transaction history
+
+**Expected**: a `-- Transaction breakdown (via dynamic_cast) --`
+heading followed by one line per `Transaction*` in Alice's
+checking-account history, identifying the concrete subclass
+(`Deposit` / `Withdraw` / `Transfer` / `LoanPay`) and printing the
+per-account `sequence` plus the process-wide `TransactionBase`
+`instanceId` (`iid=...`). The block ends with
+`(Total Transaction instances ever created: N)`.
+
+### TC-1.7: Friend-function back-door
+
+**Expected**: a `[DEBUG Account] id=A1001 balance=... txCount=N
+holder=<set> bank=<set> logger=<set>` line emitted by
+`debugDumpAccount(*aliceChk, std::cout)`. Proves the friend
+declaration grants free-function access to private members of
+`Account`.
+
+### TC-1.8: Cascade delete is clean
 
 **Expected**: the trailing line `(Bank dismantled cleanly.)` prints, and
 there is no segfault, double-free, or use-after-free. (Use `valgrind
@@ -117,9 +153,42 @@ No error, just a cap.
 
 ### TC-3.3: Exception path
 
-If `BondCalculator` ctor throws (e.g. negative nominal would, although
-`getValidatedAmount` already rejects non-positive input), the catch
-block in `runBondCalc` prints `Error: <what>`.
+If `BondCalculator` ctor throws `std::invalid_argument`, the nested
+inner catch logs `[BondCalc] invalid input: <what>` and re-throws via
+bare `throw;`; the outer catch then prints `Error: <what>`. Tests
+both the nested-catch pattern and bare-re-throw semantics.
+
+---
+
+## Scenario 4 — Verify age 21+ (menu option 4)
+
+Drives the acyclic `AgeVerifier` wrapper, which dynamically loads the
+native `age_verifier` library via `dlopen` / `LoadLibrary` and calls
+the C-ABI `verify_age_21` symbol. Not part of any SCC.
+
+### TC-4.1: OK path (age ≥ 21)
+
+**Inputs**: `5`, `6`, `1990` (day / month / year).
+**Expected**: `Result: OK -- subject is 21 or older.`.
+
+### TC-4.2: UNDER path (age < 21)
+
+**Inputs**: a date within the last 21 years, e.g. `5 / 6 / 2020`.
+**Expected**: `Result: UNDER -- subject is younger than 21.`.
+
+### TC-4.3: BAD INPUT path (invalid date)
+
+**Inputs**: `31`, `2`, `2000` (31 February).
+**Expected**: `Result: BAD INPUT -- not a real calendar date.`.
+
+### TC-4.4: LIB ERROR path (native library missing)
+
+**Setup**: `make clean-all` (or delete
+`native/linux/libage_verifier.so` / `native\windows\age_verifier.dll`),
+then run option 4.
+**Expected**: `Result: LIB ERROR -- LoadLibrary(...)` /
+`Result: LIB ERROR -- dlopen(...)` with the wrapper's error message.
+Run `make native` to restore.
 
 ---
 
@@ -128,10 +197,11 @@ block in `runBondCalc` prints `Error: <what>`.
 This is the actual deliverable of the project — verifying it requires
 running the `java_cpp_chunkagent` chunker against this tree.
 
-### TC-4.1: Three cyclic SCCs reported
+### TC-5.1: Three cyclic SCCs reported
 
 `DependencyGraphService.get_cyclic_sccs()` must return exactly three
 SCCs:
+
 - mega-SCC of size 9 (`Account`, `Transaction`, `Bank`, `Customer`,
   `Loan`, `AuditLogger`, `NotificationCenter`, `BranchManager`,
   `RiskAnalyzer`).
@@ -140,7 +210,7 @@ SCCs:
 - SCC of size 5 (`ReportEngine`, `ReportFilter`, `ReportSection`,
   `ReportFormatter`, `ReportWriter`).
 
-### TC-4.2: SCC D isolation invariant
+### TC-5.2: SCC D isolation invariant
 
 ```bash
 grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer' \
@@ -148,27 +218,27 @@ grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager
 ```
 
 **Expected**: no output. If anything matches, SCC D will fuse into the
-mega-SCC and TC-4.1 fails.
+mega-SCC and TC-5.1 fails.
 
-### TC-4.3: Acyclic baseline is acyclic
+### TC-5.3: Acyclic baseline is acyclic
 
-`Utils`, `Globals`, `Constants`, `Enums`, `BondCalculator`, and
-`LoggingVisitor` must appear in `dependency_graph.json` outside any
-SCC (or in a singleton SCC of size 1, depending on chunker
-representation).
+`Utils`, `Globals`, `Constants`, `Enums`, `BondCalculator`,
+`LoggingVisitor`, `TransactionBase`, and `AgeVerifier` must appear in
+`dependency_graph.json` outside any SCC (or in a singleton SCC of
+size 1, depending on chunker representation).
 
 ---
 
 ## Build test
 
-### TC-5.1: Clean build with zero warnings
+### TC-6.1: Clean build with zero warnings
 
 ```bash
 make clean && make all 2>&1 | grep -cE 'warning|error'
 # expected: 0
 ```
 
-### TC-5.2: Binary runs and exits cleanly via menu option 0
+### TC-6.2: Binary runs and exits cleanly via menu option 0
 
 ```bash
 printf '0\n' | ./BankSystem

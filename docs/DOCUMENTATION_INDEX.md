@@ -8,11 +8,12 @@ All documentation for the SCC-demo build of this project.
 |---|---|---|
 | `SCC_DEMO_LAYOUT.md` | **Load-bearing**: 3-SCC diagram, edge inventory, expected `dependency_graph.json`, SCC D isolation invariant. | First read for anyone validating the chunker output. Update whenever edges change. |
 | `SCC_DEMO_PROJECT_PROMPT.md` | Original Russian-language spec that drove the SCC layout. | Historical reference; useful when reasoning about why a structural decision was made. |
-| `README.md` | Project overview, build, menu options, history. | First read for anyone using the project. |
+| `README.md` | Project overview, build, menu options, history, full C++03 construct inventory. | First read for anyone using the project. |
 | `QUICK_REFERENCE.md` | Class taxonomy, ownership, type aliases, C++03 rules, isolation check. | Lookup during editing. |
 | `START_HERE.md` | One-page orientation, "what to read in what order". | Newcomer onboarding. |
 | `TEST_CASES.md` | Pass criteria per scenario. | Validating a build by hand. |
-| `TESTING_GUIDE.md` | Scripted stdin sequences for the 3 menu options. | Running scripted smoke tests. |
+| `TESTING_GUIDE.md` | Scripted stdin sequences for the 4 menu options. | Running scripted smoke tests. |
+| `NATIVE_LIBRARY.md` | C ABI, build, and runtime-loading story for the cross-platform `age_verifier` shared library (menu option 4). | Only when touching `native/` or `AgeVerifier`. |
 
 ## SCC topology (summary)
 
@@ -22,7 +23,7 @@ All documentation for the SCC-demo build of this project.
 | visitor (B) | 5 | B | `TransactionVisitor`, `Deposit`, `Withdrawal`, `Transfer`, `LoanPayment` |
 | report (D) | 5 | B | `ReportEngine`, `ReportFilter`, `ReportSection`, `ReportFormatter`, `ReportWriter` |
 
-Acyclic baseline (Tier-A): `Constants`, `Enums`, `Globals`, `Utils`, `BondCalculator`, `LoggingVisitor`.
+Acyclic baseline (Tier-A): `Constants`, `Enums`, `Globals`, `Utils`, `BondCalculator`, `LoggingVisitor`, `TransactionBase`, `AgeVerifier`.
 
 ## Cross-reference
 
@@ -41,9 +42,10 @@ Acyclic baseline (Tier-A): `Constants`, `Enums`, `Globals`, `Utils`, `BondCalcul
 
 Before shipping a change, confirm:
 
-- [ ] `make clean && make all` finishes with zero warnings.
-- [ ] `./BankSystem` runs the new-bank flow without segfault; cascade-delete prints "Bank dismantled cleanly".
+- [ ] `make clean && make all` finishes with zero warnings (builds native lib + executable).
+- [ ] `./BankSystem` runs the new-bank flow without segfault; cascade-delete prints "Bank dismantled cleanly". Audit summary + `dynamic_cast` breakdown + friend back-door dump all appear.
 - [ ] `./BankSystem` runs the report flow; pipeline completes; engine torn down cleanly.
+- [ ] `./BankSystem` runs menu option 4 against the native lib (`OK` for an old date, `LIB ERROR` if the lib was removed).
 - [ ] SCC D isolation grep produces zero output.
 - [ ] If edges changed, `SCC_DEMO_LAYOUT.md` was updated in the same commit.
 

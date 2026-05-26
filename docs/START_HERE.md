@@ -8,8 +8,8 @@ is the deliverable.
 ## In 60 seconds
 
 ```bash
-make                                          # builds with -std=c++03 -Wall -Wextra
-./BankSystem                                  # 3-option menu
+make                                          # builds native lib + ./BankSystem with -std=c++03 -Wall -Wextra
+./BankSystem                                  # 4-option menu
 printf '1\n\n2\n\n0\n' | ./BankSystem         # scripted exercise of menu 1 + 2
 ```
 
@@ -18,8 +18,9 @@ printf '1\n\n2\n\n0\n' | ./BankSystem         # scripted exercise of menu 1 + 2
 1. `SCC_DEMO_LAYOUT.md` — **load-bearing**. Three-SCC diagram, edge inventory, isolation invariant for SCC D. Read this first if you only read one doc.
 2. `README.md` — project structure, build, what each menu option does.
 3. `QUICK_REFERENCE.md` — class taxonomy table, ownership, C++03 rules.
-4. `TESTING_GUIDE.md` — scripted stdin sequences for the 3 scenarios.
+4. `TESTING_GUIDE.md` — scripted stdin sequences for the 4 scenarios.
 5. `TEST_CASES.md` — pass criteria per scenario.
+6. `NATIVE_LIBRARY.md` — only relevant when touching menu option 4 / the `native/` tree.
 
 ## By role
 
@@ -41,9 +42,10 @@ printf '1\n\n2\n\n0\n' | ./BankSystem         # scripted exercise of menu 1 + 2
 ## What's where
 
 ```
-include/   24 headers (4 SCC clusters + acyclic baseline)
-src/       24 .cpp + main.cpp
-docs/      this file + 6 others
+include/   27 headers (4 SCC clusters + acyclic baseline incl. TransactionBase / AgeVerifier)
+src/       25 .cpp + main.cpp
+native/    cross-platform age_verifier shared library (loaded at runtime)
+docs/      this file + 7 others
 Makefile   explicit SOURCES list (no glob); add new .cpp here
 ```
 

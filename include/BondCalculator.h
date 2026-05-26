@@ -25,6 +25,11 @@ struct BondCashFlow {
     double futureValueContribution; // FV of this coupon reinvested to maturity
 };
 
+// C-style "typedef struct" alias idiom — exposes BondCashFlow under a
+// second name without C++11 `using`. The _t suffix is a common
+// convention in code that originated from a C codebase.
+typedef struct BondCashFlow BondCashFlow_t;
+
 // BondCalculator - computes bond valuation and parameters.
 //
 // Inputs:

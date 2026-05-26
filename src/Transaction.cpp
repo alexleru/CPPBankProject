@@ -2,7 +2,8 @@
 #include "../include/Account.h"
 
 Transaction::Transaction(Account* src, Account* dst, Money amt)
-    : source(src), dest(dst), amount(amt), sequence(0),
+    : TransactionBase(),
+      source(src), dest(dst), amount(amt), sequence(0),
       timestamp(std::time(NULL)) {}
 
 Transaction::~Transaction() {}

@@ -3,6 +3,7 @@
 
 #include <ctime>
 #include "Constants.h"
+#include "TransactionBase.h"
 
 // Forward declaration of the SCC A partner.
 class Account;
@@ -11,12 +12,16 @@ class Account;
 // by calling Account::debit / Account::credit. This closes the SCC A
 // cycle (Account ↔ Transaction).
 //
+// Inherits from TransactionBase (acyclic) to give the project a real
+// 3-level inheritance chain (Deposit -> Transaction -> TransactionBase)
+// without dragging any new file into a cycle.
+//
 // NOTE: accept(TransactionVisitor&) is intentionally NOT declared here.
 // Declaring it would add a Transaction → TransactionVisitor edge and
 // collapse SCC B (Visitor cycle) into the mega-SCC. Visitor dispatch
 // lives only on the concrete subclasses Deposit/Withdrawal/Transfer/
 // LoanPayment.
-class Transaction {
+class Transaction : public TransactionBase {
 protected:
     Account*    source;
     Account*    dest;

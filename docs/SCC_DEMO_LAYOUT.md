@@ -14,10 +14,23 @@ baseline classes (Tier-A in chunker terminology).
 | SCC D                       | 5 | Reporting pipeline with back-callback           | B (algorithmic)    |
 
 Acyclic baseline (Tier A):
-`Utils`, `Globals`, `Constants`, `Enums`, `BondCalculator`, `LoggingVisitor`.
+`Utils`, `Globals`, `Constants`, `Enums`, `BondCalculator`,
+`LoggingVisitor`, `AgeVerifier`, `TransactionBase`.
 
 `LoggingVisitor` depends on SCC B but is not itself part of the cycle
 (no SCC B member references it), so it stays Tier-A.
+
+`AgeVerifier` is a thin RAII wrapper over the cross-platform native
+`age_verifier` library (loaded at runtime via `LoadLibrary` / `dlopen`).
+It references no SCC class.
+
+`TransactionBase` is an acyclic parent of `Transaction`. The
+`Transaction → TransactionBase` inheritance edge is one-way and
+`TransactionBase` itself references nothing, so it never joins any
+SCC; its sole purpose is to give the project a 3-level inheritance
+chain (`Deposit/Withdrawal/Transfer/LoanPayment → Transaction →
+TransactionBase`) and to expose a process-wide `unsigned long`
+`instanceCounter`.
 
 ---
 
@@ -59,7 +72,13 @@ Acyclic baseline (Tier A):
 - `Transaction::apply()` calls `source->debit()` / `dest->credit()`.
 - `Account::addTransaction()` records and numbers the transaction.
 
+`Transaction` also inherits from the acyclic `TransactionBase`. The
+inheritance edge is one-way and `TransactionBase` references nothing,
+so it does not affect SCC membership — it only adds a third level to
+the inheritance chain.
+
 The SCC A pair merges into the SCC C mesh because:
+
 - `Account::holder` → `Customer` (back-pointer).
 - `Account::bank`   → `Bank` (back-pointer).
 - `Account::logger` → `AuditLogger` (back-pointer).
@@ -212,6 +231,8 @@ grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager
 | `Utils.{h,cpp}`               | static helpers (currency format, validated I/O, function-ptr demo) |
 | `BondCalculator.{h,cpp}`      | self-contained bond valuation (menu option 3)               |
 | `LoggingVisitor.{h,cpp}`      | concrete `TransactionVisitor` — depends on SCC B but is not in it |
+| `TransactionBase.{h,cpp}`     | acyclic parent of `Transaction`; process-wide `instanceCounter` |
+| `AgeVerifier.{h,cpp}`         | RAII wrapper over `native/age_verifier` shared lib (menu option 4) |
 
 ---
 
@@ -237,6 +258,6 @@ fixed before reporting the demo as correct.
 
 ```bash
 make clean && make all                                # zero warnings under -Wall -Wextra -std=c++03
-./BankSystem                                          # interactive menu
+./BankSystem                                          # 4-option interactive menu
 printf '1\n\n2\n\n0\n' | ./BankSystem                 # exercises mega-SCC and SCC D non-interactively
 ```

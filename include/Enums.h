@@ -43,4 +43,10 @@ enum LoanStatus {
     PENDING_APPROVAL
 };
 
+// C++03 "typedef enum" alias idiom — gives the enum a second name without
+// `using` (which is C++11). Useful when the original enum tag is a verb
+// and the alias reads as a noun.
+typedef enum AccountType   AccountKind;
+typedef enum LoanStatus    LoanState;
+
 #endif // ENUMS_H

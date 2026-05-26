@@ -6,6 +6,7 @@
 1. Run new-bank flow             (mega-SCC + SCC B visitor demo)
 2. Generate report               (SCC D pipeline demo)
 3. Calculate bond parameters     (acyclic baseline)
+4. Verify age 21+                (native library demo)
 0. Exit
 ```
 
@@ -15,8 +16,9 @@
 
 | Class | Role |
 |---|---|
-| `Account` | Owns `vector<Transaction*>`. Back-pointers to `Customer`, `Bank`, `AuditLogger` (non-owning). Methods: `debit()`, `credit()`, `addTransaction()`. |
-| `Transaction` | Abstract-ish base. Holds `Account* source` and `Account* dest`. `apply()` calls `source->debit()` + `dest->credit()`. `accept(TransactionVisitor&)` is **not** declared here (would collapse SCC B). |
+| `Account` | Owns `vector<Transaction*>`. Back-pointers to `Customer`, `Bank`, `AuditLogger` (non-owning). Methods: `debit()`, `credit()`, `addTransaction()`. Friend functions: `debugDumpAccount`, `forceAccountBalance`. |
+| `Transaction` | Abstract-ish base, derives from `TransactionBase`. Holds `Account* source` and `Account* dest`. `apply()` calls `source->debit()` + `dest->credit()`. `accept(TransactionVisitor&)` is **not** declared here (would collapse SCC B). |
+| `TransactionBase` *(acyclic)* | Acyclic root of the chain. Owns a process-wide `unsigned long instanceCounter`; gives every `Transaction` a unique `instanceId`. Not part of any SCC. |
 
 ### SCC B — Visitor (size 5)
 
@@ -56,15 +58,40 @@
 
 ### Acyclic baseline (Tier-A)
 
-`Constants`, `Enums`, `Globals`, `Utils`, `BondCalculator`, `LoggingVisitor`.
+`Constants`, `Enums`, `Globals`, `Utils`, `BondCalculator`,
+`LoggingVisitor`, `TransactionBase`, `AgeVerifier`.
 
-## Type aliases (`Constants.h`)
+`AgeVerifier` is the host-side wrapper for the native `age_verifier`
+library under `native/` (loaded at runtime via `dlopen` /
+`LoadLibrary`); see [`NATIVE_LIBRARY.md`](NATIVE_LIBRARY.md).
+
+## Type aliases
 
 ```cpp
+// Constants.h — primitive domain aliases
 typedef double      Money;
 typedef std::string AccountId;
 typedef std::string LoanId;
 typedef std::string CustomerId;
+
+// Account.h — container + iterator + self typedef
+typedef std::vector<Transaction*>           TransactionHistory;
+typedef TransactionHistory::iterator        TxHistoryIterator;
+typedef TransactionHistory::const_iterator  TxHistoryConstIterator;
+class Account {
+    typedef Account self_type;   // STL-style "self typedef"
+    ...
+};
+
+// BondCalculator.h — "typedef struct" C-style alias
+typedef struct BondCashFlow BondCashFlow_t;
+
+// Enums.h — "typedef enum" aliases
+typedef enum AccountType AccountKind;
+typedef enum LoanStatus  LoanState;
+
+// AgeVerifier.cpp — function-pointer typedef
+typedef int (*VerifyFn)(int, int, int);
 ```
 
 ## Enums (`Enums.h`)

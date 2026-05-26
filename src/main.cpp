@@ -35,11 +35,19 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
+#include <cstdlib>   // for std::system
 
 static void pauseScreen() {
     std::cout << "\nPress Enter to continue...";
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::cin.get();
+}
+
+// Wraps the platform-specific CLEAR_SCREEN command (defined in Constants.h
+// as "cls" on Windows and "clear" elsewhere) and demonstrates the
+// std::system() call from <cstdlib>.
+static void clearScreen() {
+    std::system(CLEAR_SCREEN);
 }
 
 // -------------------------------------------------------------------------
@@ -128,6 +136,39 @@ static void runBankFlow() {
 
     std::cout << "\n-- Audit log --\n";
     logger->dump(std::cout);
+    logger->dumpEventSummary(std::cout);
+
+    // -- dynamic_cast demo -------------------------------------------------
+    // Walk Alice's checking-account history through the polymorphic
+    // Transaction* base and use dynamic_cast to recover the concrete
+    // SCC-B subclass. dynamic_cast returns NULL on a non-matching type,
+    // so this is the safe RTTI-based downcast in C++.
+    std::cout << "\n-- Transaction breakdown (via dynamic_cast) --\n";
+    const TransactionHistory& hist = aliceChk->getHistory();
+    for (TxHistoryConstIterator it = hist.begin(); it != hist.end(); ++it) {
+        Transaction* tx = *it;
+        if (Deposit* d = dynamic_cast<Deposit*>(tx)) {
+            std::cout << "  #" << d->getSequence() << " Deposit  iid="
+                      << d->getInstanceId() << "\n";
+        } else if (Withdrawal* w = dynamic_cast<Withdrawal*>(tx)) {
+            std::cout << "  #" << w->getSequence() << " Withdraw iid="
+                      << w->getInstanceId() << "\n";
+        } else if (Transfer* tf = dynamic_cast<Transfer*>(tx)) {
+            std::cout << "  #" << tf->getSequence() << " Transfer iid="
+                      << tf->getInstanceId() << "\n";
+        } else if (LoanPayment* lpx = dynamic_cast<LoanPayment*>(tx)) {
+            std::cout << "  #" << lpx->getSequence() << " LoanPay  iid="
+                      << lpx->getInstanceId() << "\n";
+        }
+    }
+    std::cout << "  (Total Transaction instances ever created: "
+              << TransactionBase::getInstanceCount() << ")\n";
+
+    // -- Friend back-door demo --------------------------------------------
+    // The free functions debugDumpAccount / forceAccountBalance are
+    // friends of Account and read / mutate private fields directly.
+    std::cout << "\n-- Friend back-door (debug dump) --\n";
+    debugDumpAccount(*aliceChk, std::cout);
 
     delete bank;  // cascades through all owned objects
     std::cout << "\n(Bank dismantled cleanly.)\n";
@@ -166,13 +207,21 @@ static void runBondCalc() {
     if (maxRandPct > 3.0) maxRandPct = 3.0;
 
     try {
-        BondCalculator calc(nominal, term,
-                            fixedRatePct / 100.0,
-                            maxRandPct   / 100.0,
-                            discRatePct  / 100.0);
-        calc.generateCashFlowSchedule();
-        std::cout << "PV: " << Utils::formatCurrency(calc.calculatePresentValue()) << "\n";
-        std::cout << "FV: " << Utils::formatCurrency(calc.calculateFutureValue())  << "\n";
+        // Nested try demonstrates the bare `throw;` re-throw pattern:
+        // catch a domain-specific exception, log it, then propagate the
+        // original exception object unchanged to the outer handler.
+        try {
+            BondCalculator calc(nominal, term,
+                                fixedRatePct / 100.0,
+                                maxRandPct   / 100.0,
+                                discRatePct  / 100.0);
+            calc.generateCashFlowSchedule();
+            std::cout << "PV: " << Utils::formatCurrency(calc.calculatePresentValue()) << "\n";
+            std::cout << "FV: " << Utils::formatCurrency(calc.calculateFutureValue())  << "\n";
+        } catch (const std::invalid_argument& e) {
+            std::cerr << "[BondCalc] invalid input: " << e.what() << "\n";
+            throw;   // bare re-throw — preserves dynamic type and call site
+        }
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";
     }
@@ -230,6 +279,7 @@ static void displayMenu() {
 
 int main() {
     initializeGlobals();
+    clearScreen();   // exercises system(CLEAR_SCREEN) from <cstdlib>
     std::cout << BANK_NAME << " v" << VERSION
               << " — SCC demo (" << PLATFORM_NAME << ")\n";
 

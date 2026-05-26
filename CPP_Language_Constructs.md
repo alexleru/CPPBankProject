@@ -1,119 +1,279 @@
 # C++ Language Constructs Used in CPPBankProject
 
-The codebase is intentionally written to the **C++03** standard (no `nullptr`, no `using` aliases, no `auto`, no range-based `for`, no smart pointers). That constraint is explicitly called out in `MortgageAccount.h`.
+The codebase is intentionally written to the **C++03** standard (no
+`nullptr`, no `using` aliases, no `auto`, no range-based `for`, no smart
+pointers, no `enum class`, no lambdas, no `std::function`). That
+constraint is enforced by the build flags `-std=c++03 -Wall -Wextra`
+(zero warnings required) and is called out in `CLAUDE.md`.
+
+This file is an inventory of every C++03 construct used somewhere in
+`include/`, `src/` and `native/`. The shorter `docs/README.md` carries
+the same list as part of the project overview; this file goes into
+more detail and is meant for grepping when the question is "is X
+idiomatic here? where is X already used?".
 
 ---
 
 ## 1. Preprocessor
 
 - Include guards `#ifndef / #define / #endif` in every header.
-- Quoted vs. angle-bracket includes (`#include "Account.h"` vs. `#include <vector>`).
-- Object-like macros for constants — `Constants.h` (`BANK_NAME`, `MAX_ACCOUNTS_PER_CUSTOMER`, `OVERDRAFT_LIMIT`, …) and `BondCalculator.h` (`BOND_MAX_RANDOM_RATE`, `BOND_DEFAULT_DISCOUNT_RATE`).
-- Conditional compilation `#ifdef _WIN32 / #else / #endif` (`Constants.h`, `main.cpp::clearScreen`).
+- Quoted vs. angle-bracket includes (`#include "Foo.h"` vs.
+  `#include <vector>`).
+- Object-like macros for constants — `Constants.h` (`BANK_NAME`,
+  `OVERDRAFT_LIMIT`, `CLEAR_SCREEN`, …) and `BondCalculator.h`
+  (`BOND_MAX_RANDOM_RATE`, `BOND_DEFAULT_DISCOUNT_RATE`).
+- Conditional compilation `#ifdef _WIN32 / #else / #endif` — selects
+  `cls` vs. `clear` in `Constants.h`; selects `LoadLibrary` vs.
+  `dlopen` in `src/AgeVerifier.cpp` and `native/include/age_verifier.h`;
+  also `#if defined(_WIN32) / __linux__ / #else #error` to fail-fast
+  on unsupported platforms.
 
 ## 2. Built-in & Standard Types
 
-`int`, `double`, `bool`, `char`, `unsigned int`, `unsigned long`, `size_t`, `time_t`, `std::string`, `std::vector<T>`, `std::map<K,V>`, raw C arrays (`char buffer[80]` in `Utils.cpp`, `double sensitivityRates[5]` in `BondCalculator.cpp`).
+`int`, `double`, `bool`, `char`, `unsigned int`, `unsigned long`,
+`size_t`, `time_t`, `std::string`, `std::vector<T>`, `std::map<K,V>`,
+raw C arrays (`char buffer[80]` in `Utils.cpp`, `double
+sensitivityRates[5]` in `BondCalculator.cpp`).
 
 ## 3. `typedef` Aliases (the C++03-only alias mechanism)
 
-- **Domain primitives** — `Money`, `Percentage`, `Rate`, `TermInMonths`, `TermInYears`, `MonthIndex`, `PropertyId`, `PropertyAddress`, `AccountIdRef` (`MortgageAccount.h`).
-- **Container aliases** — `TransactionHistory` (`Account.h`), `CustomerList`, `AccountRegistry`, `AccountList` (`Bank.h`), `AmortizationSchedule`, `BalanceTimeline` (`MortgageAccount.h`).
-- **Iterator aliases** — `ScheduleIterator`, `ScheduleConstIterator`, `BalanceTimelineIt`.
-- **Struct typedef pattern** — `typedef struct PropertyInfo PropertyInfo_t;` then `typedef PropertyInfo_t Property;`.
-- **Enum typedef** — `typedef enum MortgageType MortgageKind;`.
-- **Function-pointer typedef** — `typedef Money (*MortgageRule)(Money);`.
-- **"Self typedef" inside a class** — `typedef MortgageAccount self_type;` in `MortgageAccount`.
+- **Primitive domain aliases** — `Money`, `AccountId`, `LoanId`,
+  `CustomerId` (`Constants.h`).
+- **Container alias** — `typedef std::vector<Transaction*>
+  TransactionHistory;` (`Account.h`).
+- **Iterator aliases** — `typedef TransactionHistory::iterator
+  TxHistoryIterator;` and `typedef TransactionHistory::const_iterator
+  TxHistoryConstIterator;` (`Account.h`).
+- **`typedef struct` C-style alias** — `typedef struct BondCashFlow
+  BondCashFlow_t;` (`BondCalculator.h`).
+- **`typedef enum` aliases** — `typedef enum AccountType AccountKind;`
+  and `typedef enum LoanStatus LoanState;` (`Enums.h`).
+- **Function-pointer typedef** — `typedef int (*VerifyFn)(int, int,
+  int);` in the anonymous namespace of `src/AgeVerifier.cpp`.
+- **"Self typedef" inside a class** — `typedef Account self_type;`
+  (`Account.h`), the STL/Boost idiom for exposing the wrapped type.
 
 ## 4. Enums (Unscoped, C++03 Style)
 
-`AccountType`, `TransactionType`, `TransactionStatus`, `CustomerStatus`, `LoanStatus` (`Enums.h`), and the feature-local `MortgageType` (`MortgageAccount.h`).
+`AccountType`, `TransactionType`, `TransactionStatus`, `CustomerStatus`,
+`LoanStatus` — all in `Enums.h`.
 
 ## 5. Structs
 
-`EMIPayment` (`LoanAccount.h`), `PropertyInfo`, `MortgageInstallment` (`MortgageAccount.h`), `BondCashFlow` (`BondCalculator.h`) — all plain data aggregates.
+`BondCashFlow` (`BondCalculator.h`) — plain data aggregate (also
+exposed via the `typedef struct` idiom).
 
 ## 6. Classes & OOP Features
 
-- Abstract base class with pure virtual methods — `Account` (`virtual AccountType getAccountType() const = 0;`, `virtual void applyMonthlyProcessing() = 0;`).
-- Public single inheritance — `SavingsAccount`, `CheckingAccount`, `LoanAccount` derive from `Account`.
-- Multi-level inheritance — `MortgageAccount : public LoanAccount` (which itself derives from `Account`).
-- Virtual destructor on the polymorphic base (`virtual ~Account()`).
-- Virtual method overriding (`withdraw`, `displayAccountInfo`, `applyMonthlyProcessing`).
-- Explicit base-class call from override — `LoanAccount::applyMonthlyProcessing()`, `Account::displayAccountInfo()`.
-- Access specifiers `public` / `protected` / `private`.
-- `const` member functions (e.g., all getters).
-- Static data members and static methods — `Customer::customerCounter`, `Transaction::transactionCounter`, `Utils::customerIdCounter`, `Utils::add/multiply/performOperation`, `LoanAccount::calculateEMI`, `MortgageAccount::computeLoanPrincipal`.
-- Function overloading — `Bank::findCustomer` non-const + const, `BondCalculator::generateCashFlowSchedule()` and `(unsigned int seed)`.
-- Default arguments — `withdraw(amount, description = "Withdrawal")`, `LoanAccount(double, double rate = 0.08, int termMonths = 12)`, `BondCalculator(..., double maxRandomRate = BOND_MAX_RANDOM_RATE, …)`.
-- Constructor member-initializer lists in every class (e.g. `Account::Account(...) : type(..), balance(..), createdDate(std::time(NULL)), ...`).
-- `friend` functions to expose private state for debug/admin — `debugAccountInfo`, `validateAccountBalance`, `forceBalanceUpdate`, `getAccountTransactions`, `debugCustomerInfo`, `validateCustomerData`, `updateCustomerStatus`, `getCustomerAccounts`, `debugBankInfo`, `getAllCustomers`, `getAccountRegistry`, `forceCloseAccount`.
-- Forward declaration — `class Account;` in `Customer.h`.
+- Abstract base class with pure virtual methods — `TransactionVisitor`
+  (`virtual void visit(Deposit*) = 0;` etc.).
+- Public single inheritance — `Deposit : public Transaction`,
+  `Withdrawal : public Transaction`, `Transfer : public Transaction`,
+  `LoanPayment : public Transaction`; concrete `LoggingVisitor : public
+  TransactionVisitor`.
+- **Multi-level inheritance (3 levels)** — `Deposit / Withdrawal /
+  Transfer / LoanPayment → Transaction → TransactionBase`. `TransactionBase`
+  is an acyclic root that owns a process-wide `unsigned long
+  instanceCounter`.
+- Virtual destructor on every polymorphic base — `virtual
+  ~Transaction()`, `virtual ~TransactionBase()`, `virtual
+  ~TransactionVisitor()`, `virtual ~ReportFilter()` etc.
+- Virtual method overriding — `Transaction::apply()` overridden by
+  each concrete subclass; `accept(TransactionVisitor&)` implemented
+  per concrete subclass.
+- Explicit base-class call — `Transaction::apply();` from
+  `LoanPayment::apply()` (also forwards to `Loan::recordPayment`).
+- Access specifiers — `public`, `protected`, `private` (e.g.
+  `protected: Account* source; Account* dest;` on `Transaction`).
+- `const` member functions — every getter, e.g. `Bank::getName() const`,
+  `Account::getId() const`, `TransactionBase::getInstanceId() const`.
+- Static data members — `TransactionBase::instanceCounter`,
+  `Utils::customerIdCounter` (defined in `.cpp`).
+- Static member methods — `Utils::formatCurrency`,
+  `Utils::performOperation`, `TransactionBase::getInstanceCount`.
+- Function overloading — `BondCalculator::generateCashFlowSchedule()`
+  vs. `(unsigned int seed)`; `Utils::add` / `Utils::multiply` plus
+  `Utils::performOperation`.
+- Default arguments — `Utils::getValidatedAmount(prompt, bool
+  allowZero = false)`; `BondCalculator` ctor has multiple defaults.
+- Constructor member-initializer lists in every class
+  (`Transaction::Transaction(...) : TransactionBase(), source(...),
+  dest(...), amount(...), sequence(0), timestamp(std::time(NULL)) {}`).
+- `friend` functions to expose private state for debug/admin —
+  `debugDumpAccount` and `forceAccountBalance`, declared friend in
+  `Account` and defined as free functions in `Account.cpp`.
+- Forward declarations — `class Customer;` in `Account.h`, the four
+  concrete subclasses forward-declared in `TransactionVisitor.h`, etc.
 - "Utility class" idiom — `Utils` exposes only static methods.
 
 ## 7. Memory Management
 
-- `new` / `delete` with raw pointers (e.g. `new SavingsAccount(...)`, `delete accounts[i]` in `Customer::~Customer`).
-- C-style `NULL` rather than `nullptr` (consistent with C++03).
-- Container-managed RAII for `std::vector` / `std::map` members.
+- `new` / `delete` with raw pointers — throughout `main.cpp`, in
+  `Bank::~Bank`, `Customer::~Customer`, `Account::~Account`,
+  `BranchManager::~BranchManager`, `ReportEngine::~ReportEngine`,
+  `ReportWriter::~ReportWriter`.
+- C-style `NULL` rather than `nullptr`.
+- Container-managed RAII for `std::vector` members.
 
 ## 8. Type-Conversion Casts
 
-- `static_cast<int>(i)`, `static_cast<size_t>(termMonths)`, `static_cast<double>(...)`, `static_cast<unsigned int>(std::time(NULL))`, `static_cast<Rate>(MONTHS_PER_YEAR)`, `static_cast<PropertyId>(...)`.
-- `dynamic_cast<MortgageAccount*>(a)` in `Bank::findMortgageAccount` for safe downcasting.
+- `static_cast<int>(history.size())`,
+  `static_cast<unsigned int>(std::time(NULL))`,
+  `static_cast<void*>(h)` (in `AgeVerifier`),
+  `static_cast<double>(...)` etc.
+- `dynamic_cast` — `main.cpp::runBankFlow` walks
+  `aliceChk->getHistory()` and downcasts each `Transaction*` to
+  `Deposit* / Withdrawal* / Transfer* / LoanPayment*` to recover the
+  concrete subclass type (the safe RTTI-based downcast).
+- `reinterpret_cast<void*>(p)` — once, in `AgeVerifier.cpp` to convert
+  a `FARPROC` returned by `GetProcAddress` to `void*` for storage.
 
 ## 9. Exception Handling
 
-- `try` / `catch` / `throw` blocks throughout `Bank.cpp`, `Account.cpp`, `BondCalculator.cpp`, `LoanAccount.cpp`, `MortgageAccount.cpp`, `main.cpp`.
-- Standard exception types — `std::invalid_argument`, `std::runtime_error`, base `std::exception`.
-- Catch by `const std::exception&`.
-- Bare `throw;` to re-throw (transfer reversal in `Bank::transferBetweenAccounts`).
+- `try` / `catch` / `throw` — `BondCalculator.cpp`, `main.cpp`,
+  `Account::debit/credit` for overdraft etc.
+- Standard exception types — `std::invalid_argument`,
+  `std::runtime_error`, base `std::exception`.
+- Catch by `const std::exception&` (slicing-safe).
+- **Bare `throw;` re-throw** — `main.cpp::runBondCalc` catches
+  `std::invalid_argument` in an inner block, logs it, then re-throws
+  via `throw;` to the outer `catch (const std::exception&)`. Preserves
+  the dynamic type of the exception object.
 
 ## 10. Control Flow
 
-- `if` / `else if` / `else`; `switch / case / default / break`; `while`, `for` (classic index and iterator forms); `return`, `continue`.
-- Ternary `?:` (e.g. `(allowZero ? amount >= 0 : amount > 0)`, `pmiRequired ? "Yes" : "No"`).
+- `if` / `else if` / `else`; `switch / case / default / break`;
+  `while`, `for` (classic index form `for (size_t i = 0; …)` and
+  iterator form `for (TxHistoryConstIterator it = hist.begin(); …;
+  ++it)`); `return`, `continue`.
+- Ternary `?:` — e.g. `(allowZero ? amount >= 0 : amount > 0)` in
+  `Utils.cpp`, `holder ? "<set>" : "<null>"` in `debugDumpAccount`.
 - No range-based `for` (deliberate, C++03).
 
 ## 11. Functions
 
-- Free functions, member functions, static methods.
-- Function pointers as parameters — `void performOperation(int, int, int (*operation)(int, int))`, `void Bank::applyToAllAccounts(double (*rule)(double))`, `Money MortgageAccount::applyMortgageRule(MortgageRule rule)`.
+- Free functions — `main`, `pauseScreen`, `clearScreen`,
+  `initializeGlobals`, the friend back-doors `debugDumpAccount` and
+  `forceAccountBalance`.
+- Member functions, static methods.
+- Function pointers as parameters — `Utils::performOperation(int, int,
+  int (*operation)(int, int))`.
 - `main()` returning `int`.
+- **Anonymous (unnamed) namespace** — `namespace { ... }` in
+  `src/AgeVerifier.cpp` to give the `VerifyFn` typedef and
+  `SYMBOL_NAME` constant internal linkage.
 
 ## 12. Global State & Linkage
 
-- `extern` global variables declared in `Globals.h`, defined in `Globals.cpp` (`globalCustomerCounter`, `enableDebugLogging`, `logFilePath`, …).
-- Global object instance — `Bank globalBank(BANK_NAME);` in `main.cpp`.
-- File-scope `static const` constants — `PMI_LTV_THRESHOLD`, `PMI_ANNUAL_RATE`, `DEFAULT_PROPERTY_TAX`, `MONTHS_PER_YEAR` in `MortgageAccount.cpp`.
+- `extern` global variables declared in `Globals.h`, defined in
+  `Globals.cpp` (`globalCustomerCounter`, `enableDebugLogging`,
+  `logFilePath`).
+- Static data member with file-scope definition —
+  `unsigned long TransactionBase::instanceCounter = 0UL;`
+  in `TransactionBase.cpp`.
+- File-scope `static const` constants — `DEFAULT_LIB_PATH` and
+  `SYMBOL_NAME` in `src/AgeVerifier.cpp`.
 
 ## 13. Standard Library Usage
 
-- **Streams `<iostream>`** — `std::cout`, `std::cerr`, `std::cin`, `std::endl`, stream-state with `cin.clear()`, `cin.ignore(numeric_limits<streamsize>::max(), '\n')`.
-- **I/O manipulators `<iomanip>`** — `std::fixed`, `std::setprecision`, `std::setw`, `std::setfill`, `std::left`.
-- **String streams `<sstream>`** — `std::ostringstream` for ID generation and currency formatting.
-- **Strings** — `std::getline`, `find`, `rfind`, `length`, `empty`, `size`, `npos`, indexed access.
-- **Vectors** — `push_back`, `clear`, `reserve`, `empty`, `size`, `back`, `begin`/`end`, `erase`, `[i]`.
-- **Maps** — `find`, `end`, iterator pair (`it->first`/`it->second`), `[key]` insertion, `const_iterator`.
-- **Math `<cmath>`** — `std::pow`, `std::sqrt`, `std::abs`.
-- **Algorithm `<algorithm>`** — `std::max`.
+- **Streams `<iostream>`** — `std::cout`, `std::cerr`, `std::cin`,
+  `std::endl`, stream-state with `cin.clear()`,
+  `cin.ignore(numeric_limits<streamsize>::max(), '\n')`.
+- **I/O manipulators `<iomanip>`** — `std::fixed`, `std::setprecision`,
+  `std::setw`, `std::setfill`, `std::left`.
+- **String streams `<sstream>`** — `std::ostringstream` for audit
+  entries, `LoadLibrary` error messages, currency formatting.
+- **Strings** — `find`, `rfind`, `length`, `empty`, `size`, indexed
+  access.
+- **Vectors** — `push_back`, `clear`, `reserve`, `empty`, `size`,
+  `back`, `begin`/`end`, `erase`, `[i]`.
+- **Maps `<map>`** — `find`, `operator[]` (default-constructs value on
+  first hit), `const_iterator` iteration over
+  `std::map<std::string, unsigned long>` in
+  `AuditLogger::dumpEventSummary`.
+- **Math `<cmath>`** — `std::pow`, `std::sqrt` in `BondCalculator`.
+- **Algorithm `<algorithm>`** — `std::max` in `BondCalculator`.
 - **Time `<ctime>`** — `std::time`, `std::localtime`, `std::strftime`.
-- **Random `<cstdlib>`** — `std::rand`, `std::srand`, `RAND_MAX`.
+- **Random `<cstdlib>`** — `std::rand`, `std::srand`, `RAND_MAX`,
+  `std::system(CLEAR_SCREEN)`.
 - **Limits `<limits>`** — `std::numeric_limits<std::streamsize>::max()`.
-- **Char classification** — `std::isdigit`.
+- **Char classification `<cctype>`** — `std::isdigit`.
 - **`<stdexcept>` / `<exception>`** for the exception hierarchy.
-- **`system("cls" / "clear")`** from `<cstdlib>`.
+- **`<iosfwd>`** — used in headers that only forward-declare
+  `std::ostream&` (`AuditLogger.h`, `Account.h`).
 
-## 14. Idiomatic Patterns Demonstrated
+## 14. Native interop (cross-platform dynamic loading)
 
-- **Template Method** via virtual functions (`Account::applyMonthlyProcessing` overridden per subclass).
-- **Strategy** via function pointers (`Bank::applyToAllAccounts`, `MortgageAccount::applyMortgageRule`, `Utils::performOperation`).
-- **Pseudo-singleton** global object (`globalBank`).
-- **Polymorphism** through `Account*` stored in a `std::map<std::string, Account*>` registry.
-- **Friend-function back-doors** used for debug/admin operations rather than getters/setters.
+The host application links statically with the standard library only;
+the `age_verifier` shared library is loaded at runtime through the
+platform-specific dynamic-linker API:
+
+- **Windows** — `LoadLibraryA` / `GetProcAddress` / `FreeLibrary` from
+  `<windows.h>`. The exported symbol uses `__declspec(dllexport)` /
+  `__declspec(dllimport)` in `native/include/age_verifier.h` and is
+  guarded by `extern "C"` to avoid name mangling.
+- **Linux** — `dlopen` / `dlsym` / `dlclose` from `<dlfcn.h>`; the
+  application links with `-ldl`. Same `extern "C"` ABI.
+
+The wrapper class `AgeVerifier` owns the library handle (RAII —
+`FreeLibrary` / `dlclose` from the destructor), stores a typed
+function pointer (`VerifyFn`), and surfaces the result as an enum.
+
+## 15. Idiomatic Patterns Demonstrated
+
+- **Visitor (double dispatch)** — `TransactionVisitor::visit(Deposit*)`
+  paired with `Deposit::accept(TransactionVisitor&)`.
+- **Template Method** via virtual functions — `Transaction::apply()`
+  overridden per concrete subclass.
+- **Strategy** via function pointers — `Utils::performOperation`.
+- **Pseudo-singleton** global state — `globalCustomerCounter`,
+  `enableDebugLogging` initialised once via `initializeGlobals()`.
+- **Polymorphism through base-class pointers in a container** —
+  `std::vector<Transaction*>` owned by `Account`,
+  `std::vector<Customer*>` owned by `Bank`.
+- **Friend-function back-doors** for debug/admin — `debugDumpAccount`,
+  `forceAccountBalance`.
+- **Mediator / observer mesh** — `AuditLogger` +
+  `NotificationCenter` + `BranchManager` + `RiskAnalyzer` are the
+  mediators that close the mega-SCC around `Bank` / `Customer` /
+  `Loan` / `Account` / `Transaction`.
+- **Pipeline with back-callback** — the SCC D reporting pipeline:
+  `ReportEngine::generate → ReportWriter::write → ReportSection::render
+  → ReportFormatter::format`, then
+  `ReportWriter → ReportEngine::onPageReady` closes the cycle.
+- **RAII wrapper over a C handle** — `AgeVerifier` holds a `void*`
+  library handle and releases it in the destructor.
+
+---
+
+## What's intentionally NOT used
+
+The codebase studies C++03 → Java porting, so the following C++11+
+features are deliberately absent and must stay absent:
+
+- `nullptr`, `auto`, range-based `for`.
+- `using` type aliases (use `typedef`).
+- `std::unique_ptr` / `std::shared_ptr` (use raw `new`/`delete` with
+  documented ownership in the relevant header).
+- `enum class`, `override`, `final`, `noexcept`.
+- Lambdas, `std::function`.
+- `constexpr`, uniform-initialization braces `{}` for non-aggregates.
+- `std::array`, `std::unordered_map`, `<chrono>`, `<thread>`,
+  `<filesystem>`, `<memory>`.
+
+If you find yourself reaching for one of these, the C++03 equivalent
+already exists somewhere in the codebase — find it and follow the
+pattern.
 
 ---
 
 ## Summary
 
-The project deliberately exercises the full C++03 surface — preprocessor, typedefs, enums, structs, single + multi-level public inheritance, abstract classes with pure virtuals, virtual dispatch, `dynamic_cast`, friend functions, static members, function pointers, exception handling, and STL containers/iterators/streams — without using any C++11+ features.
+The project deliberately exercises the full C++03 surface —
+preprocessor, typedefs, enums, structs, single + multi-level public
+inheritance, abstract classes with pure virtuals, virtual dispatch,
+`dynamic_cast`, `reinterpret_cast`, friend functions, static members,
+function pointers, anonymous namespaces, exception handling
+(including nested catch + bare re-throw), STL containers / iterators /
+streams, and cross-platform native dynamic-loading — without using any
+C++11+ features.

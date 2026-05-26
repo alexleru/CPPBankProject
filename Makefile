@@ -47,6 +47,7 @@ SOURCES = $(SRC_DIR)/main.cpp \
           $(SRC_DIR)/Utils.cpp \
           $(SRC_DIR)/Globals.cpp \
           $(SRC_DIR)/BondCalculator.cpp \
+          $(SRC_DIR)/TransactionBase.cpp \
           $(SRC_DIR)/Transaction.cpp \
           $(SRC_DIR)/Account.cpp \
           $(SRC_DIR)/TransactionVisitor.cpp \

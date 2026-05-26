@@ -28,6 +28,13 @@ Expected output highlights:
 - Three `Customer registered` broadcasts
 - Four `[LOG]` lines (one per transaction type) plus a `LOANPAY` line
 - Audit-log dump ending with `Broadcast: Loan approved for Alice Smith`
+- `[AUDIT SUMMARY]` block with per-event-type counters (`std::map` demo)
+- `-- Transaction breakdown (via dynamic_cast) --` listing each
+  concrete subclass for Alice's checking-account history, with each
+  line including the `TransactionBase` `instanceId` (`iid=...`) and a
+  trailing total instance count
+- `-- Friend back-door (debug dump) --` line emitted by
+  `debugDumpAccount`
 - Final balances table (see TC-1.4)
 - Trailing `(Bank dismantled cleanly.)`
 
@@ -62,6 +69,29 @@ Stdin breakdown:
 Expected output highlights:
 - `PV: $...` and `FV: $...` lines (numeric values vary; uses `std::rand`)
 
+### Scenario 4 — verify age 21+ (native library)
+
+```bash
+printf '4\n5\n6\n2000\n\n0\n' | ./BankSystem
+```
+
+Stdin breakdown:
+
+- `4` — menu option 4
+- `5`, `6`, `2000` — day / month / year of birth (5 June 2000)
+- `\n` — pause acknowledgement
+- `0` — exit
+
+Expected output highlights:
+
+- `Result: OK -- subject is 21 or older.` (for a date that's clearly
+  more than 21 years ago)
+- `Result: UNDER -- subject is younger than 21.` for a recent year
+- `Result: BAD INPUT -- not a real calendar date.` for `31 / 2 / 2000`
+- `Result: LIB ERROR -- ...` if the native library was not built or
+  was deleted; covers the `LoadLibrary`/`dlopen` failure path. Run
+  `make native` first if you see this.
+
 ### Combined scenarios 1 + 2
 
 ```bash
@@ -76,12 +106,18 @@ or SCC D code.
 When debugging interactively:
 
 1. `./BankSystem`
-2. Pick option `1`. Read the audit log. Verify the four `[LOG]` lines
-   and the loan-approval broadcasts appear.
+2. Pick option `1`. Read the audit log + `[AUDIT SUMMARY]`. Verify the
+   four `[LOG]` lines, the loan-approval broadcasts, the
+   `dynamic_cast` breakdown and the `debugDumpAccount` block all
+   appear.
 3. Press Enter, pick option `2`. Verify "pages=2" prints.
 4. Press Enter, pick option `3`, enter `100 / 12 / 5 / 2 / 3`. Verify
    PV/FV print.
-5. Press Enter, pick `0`. Confirm clean exit.
+5. Press Enter, pick option `4`, enter a clearly-old date (e.g.
+   `5 / 6 / 1990`). Verify `Result: OK ...`. Repeat with a recent year
+   for the `UNDER` path, and an impossible date (`31 / 2 / 2000`) for
+   `BAD INPUT`.
+6. Press Enter, pick `0`. Confirm clean exit.
 
 ## Memory check
 
@@ -138,11 +174,11 @@ make clean && make all 2>&1 | grep -cE 'warning|error'
 
 For more elaborate test orchestration, the original project shipped a
 Python script that drove the binary via subprocess. The current build
-has three menu options only, so a Python harness is overkill — the
-shell `printf | ./BankSystem` pattern is sufficient. If you do want a
+has four menu options, so a Python harness is overkill — the shell
+`printf | ./BankSystem` pattern is sufficient. If you do want a
 harness, a 20-line wrapper around `subprocess.run(['./BankSystem'],
 input=..., capture_output=True)` plus regex assertions against stdout
-covers all three scenarios.
+covers all four scenarios.
 
 ## Troubleshooting
 
