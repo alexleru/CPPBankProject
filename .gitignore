@@ -35,6 +35,10 @@ Thumbs.db
 *.so
 *.dylib
 
+# Allow the shipped prebuilt native libraries
+!native/windows/age_verifier.dll
+!native/linux/libage_verifier.so
+
 # Test files
 test_*
 *_test

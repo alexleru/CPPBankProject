@@ -29,6 +29,9 @@
 #include "../include/ReportFormatter.h"
 #include "../include/ReportWriter.h"
 
+// Native age-verification library wrapper (outside the SCC graph).
+#include "../include/AgeVerifier.h"
+
 #include <iostream>
 #include <limits>
 #include <stdexcept>
@@ -175,6 +178,44 @@ static void runBondCalc() {
     }
 }
 
+// -------------------------------------------------------------------------
+// Scenario 4 — Native library demo. AgeVerifier dynamically loads the
+// platform-appropriate age_verifier.{dll,so} via LoadLibrary / dlopen and
+// calls the C-ABI verify_age_21 entry point. Outside the SCC graph.
+// -------------------------------------------------------------------------
+static void runAgeVerification() {
+    std::cout << "\n=== VERIFY AGE (21+) -- NATIVE LIBRARY ===\n\n";
+
+    AgeVerifier verifier;
+    if (!verifier.isLoaded()) {
+        std::cerr << "Failed to load native library ("
+                  << verifier.libraryPath() << "): "
+                  << verifier.lastError() << "\n";
+        return;
+    }
+    std::cout << "Loaded: " << verifier.libraryPath() << "\n\n";
+
+    int day   = Utils::getValidatedInteger("Enter day of birth (1-31): ");
+    int month = Utils::getValidatedInteger("Enter month of birth (1-12): ");
+    int year  = Utils::getValidatedInteger("Enter year of birth (1900-9999): ");
+
+    AgeVerifier::Result r = verifier.verify(day, month, year);
+    switch (r) {
+        case AgeVerifier::AGE_OK:
+            std::cout << "Result: OK -- subject is 21 or older.\n";
+            break;
+        case AgeVerifier::AGE_UNDER:
+            std::cout << "Result: UNDER -- subject is younger than 21.\n";
+            break;
+        case AgeVerifier::AGE_BAD_INPUT:
+            std::cout << "Result: BAD INPUT -- not a real calendar date.\n";
+            break;
+        case AgeVerifier::AGE_LIB_ERROR:
+            std::cout << "Result: LIB ERROR -- " << verifier.lastError() << "\n";
+            break;
+    }
+}
+
 static void displayMenu() {
     std::cout << "\n=========================================\n";
     std::cout << "   " << BANK_NAME << " — SCC DEMO\n";
@@ -182,6 +223,7 @@ static void displayMenu() {
     std::cout << "1. Run new-bank flow (SCC A+B+C scenario)\n";
     std::cout << "2. Generate report (SCC D scenario)\n";
     std::cout << "3. Calculate bond parameters (acyclic baseline)\n";
+    std::cout << "4. Verify age 21+ (native library demo)\n";
     std::cout << "0. Exit\n";
     std::cout << "Choice: ";
 }
@@ -202,9 +244,10 @@ int main() {
         }
         if (choice == 0) break;
         switch (choice) {
-            case 1: runBankFlow();   pauseScreen(); break;
-            case 2: runReportFlow(); pauseScreen(); break;
-            case 3: runBondCalc();   pauseScreen(); break;
+            case 1: runBankFlow();         pauseScreen(); break;
+            case 2: runReportFlow();       pauseScreen(); break;
+            case 3: runBondCalc();         pauseScreen(); break;
+            case 4: runAgeVerification();  pauseScreen(); break;
             default: std::cerr << "Invalid choice.\n";
         }
     }

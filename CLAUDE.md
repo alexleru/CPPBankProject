@@ -13,15 +13,18 @@ See `docs/SCC_DEMO_LAYOUT.md` for the authoritative description of the three SCC
 Single hand-written cross-platform Makefile (no CMake, no test framework).
 
 ```bash
-make            # builds ./BankSystem (BankSystem.exe on Windows MinGW)
-make clean      # removes build/ and the executable
-./BankSystem    # 3-option interactive menu
+make            # builds the native age_verifier library AND ./BankSystem (BankSystem.exe on Windows MinGW)
+make native     # builds only the platform-appropriate native library
+make clean      # removes build/ and the executable; keeps the native lib
+make clean-all  # also deletes the built native lib under native/{linux,windows}/
+./BankSystem    # 4-option interactive menu
 ```
 
-Manual compile:
+Manual compile (note the native lib is built separately and `-ldl` is required on Linux):
 
 ```bash
-g++ -std=c++03 -Wall -Wextra -I./include -o BankSystem src/*.cpp
+g++ -std=c++03 -O2 -Wall -fPIC -shared -o native/linux/libage_verifier.so native/src/age_verifier.cpp
+g++ -std=c++03 -Wall -Wextra -I./include -o BankSystem src/*.cpp -ldl
 ```
 
 If you add a new `.cpp` under `src/`, append it to the explicit `SOURCES` list in the `Makefile` — it does not glob.
@@ -47,7 +50,9 @@ The whole point of this codebase is studying C++03 → Java porting, so the dial
 | **B** (Visitor) | `TransactionVisitor`, `Deposit`, `Withdrawal`, `Transfer`, `LoanPayment` | 5 | separate SCC; concrete `LoggingVisitor` is acyclic |
 | **D** (Reporting pipeline) | `ReportEngine`, `ReportFilter`, `ReportSection`, `ReportFormatter`, `ReportWriter` | 5 | **fully isolated** from A/B/C |
 
-**Acyclic baseline** (Tier-A in chunker terms): `Utils`, `Globals`, `Constants`, `Enums`, `BondCalculator`, `LoggingVisitor`.
+**Acyclic baseline** (Tier-A in chunker terms): `Utils`, `Globals`, `Constants`, `Enums`, `BondCalculator`, `LoggingVisitor`, `AgeVerifier`.
+
+`AgeVerifier` (`include/AgeVerifier.h`, `src/AgeVerifier.cpp`) is a thin RAII wrapper around the cross-platform `age_verifier` native library under `native/` (loaded at runtime via `LoadLibrary` / `dlopen`). It references no SCC A/B/C/D class and must stay that way — keep the wrapper isolated so it never gets pulled into the mega-SCC.
 
 ### Why SCC B does NOT merge into the mega-SCC
 
@@ -86,11 +91,12 @@ Everything else is a non-owning back-pointer.
 
 ## `main.cpp` menu
 
-Three options, all exit with `0`:
+Four options, all exit with `0`:
 
 1. **New bank flow** — exercises the mega-SCC end-to-end: creates `Bank` + mediators, registers customers, opens accounts, runs `Deposit`/`Withdrawal`/`Transfer`/`LoanPayment` through both `apply()` and `LoggingVisitor`, approves a `Loan` via `BranchManager`, broadcasts via `NotificationCenter`, dumps the audit log, then `delete bank;` (cascade).
 2. **Generate report** — exercises SCC D: builds the engine/filter/formatter/writer pipeline, calls `engine->generate(std::cout)`, cascade-deletes via `delete engine;`.
 3. **Calculate bond parameters** — drives `BondCalculator` (acyclic baseline).
+4. **Verify age 21+** — constructs an `AgeVerifier`, which dynamically loads the native library and calls the C-ABI `verify_age_21` symbol. Prints `OK` / `UNDER` / `BAD INPUT` / `LIB ERROR`. See `docs/NATIVE_LIBRARY.md`.
 
 ## Testing
 
@@ -106,3 +112,4 @@ There is no unit-test framework. Testing is scripting stdin into the interactive
 - `docs/TESTING_GUIDE.md` — scripted stdin sequences for each scenario.
 - `CPP_Language_Constructs.md` — inventory of every C++03 construct used (helpful when wondering "is X idiomatic here?").
 - `CPP_Reports_Comparison.md` — meta-doc; not load-bearing.
+- `docs/NATIVE_LIBRARY.md` — cross-platform `age_verifier` library (ABI, build, menu option 4).
