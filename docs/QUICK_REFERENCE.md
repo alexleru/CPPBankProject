@@ -54,7 +54,38 @@
 | `ReportFormatter` | — | `ReportSection*` (the most recently formatted) |
 | `ReportWriter` | `ReportFormatter*` | `ReportEngine*` |
 
-**Isolation invariant**: zero references between SCC D and any class in SCC A/B/C.
+Additional cross-partner methods added by the complexity-enhancement layer:
+`ReportEngine::consolidate(ReportEngine*, ReportFilter*, ReportWriter*)`,
+`ReportEngine::partition(ReportSection*, ReportFormatter*) → std::pair<ReportEngine*, ReportEngine*>`,
+`ReportSection::applyFilter(ReportFilter*, ReportFormatter*) const → std::vector<ReportSection*>`,
+`ReportSection::mergeWith(ReportSection*, ReportFormatter*)`,
+`ReportWriter::batchWrite(const std::vector<ReportSection*>&, ReportFilter*, ReportEngine*)`.
+
+**Isolation invariant**: zero references between SCC D and any class in SCC A/B/C/E.
+
+### SCC E — Credit scoring (size 4, isolated, Tier-B stub demo)
+
+| Class | Owns | Refs (non-owning) |
+|---|---|---|
+| `ScoreCard` | — | `ObligationMatrix*`, `WeightingEngine*`, `TierClassifier*` |
+| `ObligationMatrix` | — | `std::map<int, std::vector<ScoreCard*> >`, `WeightingEngine*`, `TierClassifier*` |
+| `WeightingEngine` | — | `ObligationMatrix*`, `TierClassifier*` |
+| `TierClassifier` | — | `ObligationMatrix*`, `WeightingEngine*` (set by `bind()`) |
+
+Cross-partner methods include
+`ScoreCard::recalibrate(ObligationMatrix*, WeightingEngine*)`,
+`ScoreCard::currentTier(TierClassifier*, ObligationMatrix*) const`,
+`ObligationMatrix::computeObligations(ScoreCard*, WeightingEngine*) const`,
+`ObligationMatrix::propagate(ScoreCard*, WeightingEngine*)`,
+`WeightingEngine::reweightMatrix(ObligationMatrix*, double) → std::vector<ScoreCard*>`,
+`WeightingEngine::calibrate(ObligationMatrix*, ScoreCard*)`,
+`TierClassifier::batchClassify(ObligationMatrix*, WeightingEngine*) → std::map<int, std::vector<ScoreCard*> >`,
+`TierClassifier::recalibrate(WeightingEngine*, ScoreCard*)`.
+
+**Isolation invariant**: zero references between SCC E and any class in SCC A/B/C/D.
+Stored back-pointers in all four nodes guarantee the 4-node cycle is visible
+in the include graph — not only via method parameters. This makes SCC E a
+Tier-B candidate for the chunker's stub-generation path.
 
 ### Acyclic baseline (Tier-A)
 
@@ -139,12 +170,19 @@ Back-pointers are all non-owning; never `delete` through them.
 
 Customer/account IDs in the new scenarios are hand-rolled strings (e.g. `"C0001"`, `"A1001"`, `"L0001"`). The legacy `Utils::generateCustomerId()` / `generateAccountId()` helpers still exist and produce `CUST000xxx` / `ACC000xxx` patterns but aren't called by the new menu.
 
-## SCC isolation check
+## SCC isolation checks
 
 ```bash
-grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer' \
+# SCC D must not reference mega-SCC / SCC B / SCC E
+grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer|ScoreCard|ObligationMatrix|WeightingEngine|TierClassifier' \
     include/Report*.h src/Report*.cpp
+# must print nothing
+
+# SCC E must not reference mega-SCC / SCC B / SCC D
+grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer|Report' \
+    include/ScoreCard.h include/ObligationMatrix.h include/WeightingEngine.h include/TierClassifier.h \
+    src/ScoreCard.cpp src/ObligationMatrix.cpp src/WeightingEngine.cpp src/TierClassifier.cpp
 # must print nothing
 ```
 
-If anything matches, SCC D will fuse into the mega-SCC and the demo is broken.
+If anything matches, SCC D or SCC E will fuse into the mega-SCC and the demo is broken.

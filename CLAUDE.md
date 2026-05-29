@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project is
 
-A deliberate fixture for the `java_cpp_chunkagent` plugin (C++ → Java/Spring converter). The dependency graph is engineered so that a chunker analysing `#include`s and method-call edges finds **exactly three cyclic strongly-connected components**, of curated sizes and tiers. The bank-domain code is incidental — the SCC topology is the point.
+A deliberate fixture for the `java_cpp_chunkagent` plugin (C++ → Java/Spring converter). The dependency graph is engineered so that a chunker analysing `#include`s and method-call edges finds **exactly four cyclic strongly-connected components**, of curated sizes and tiers. The bank-domain code is incidental — the SCC topology is the point.
 
-See `docs/SCC_DEMO_LAYOUT.md` for the authoritative description of the three SCCs, edges, and the SCC D isolation invariant. See `docs/SCC_DEMO_PROJECT_PROMPT.md` for the original spec that drove the layout.
+See `docs/SCC_DEMO_LAYOUT.md` for the authoritative description of the SCCs, edges, and isolation invariants. See `docs/SCC_DEMO_PROJECT_PROMPT.md` for the original spec that drove the layout. The complexity-enhancement layer (extra cross-partner methods on SCC D + RiskAnalyzer, plus the new credit-scoring SCC) is described in `docs/CPP_BANK_PROJECT_COMPLEXITY_ENHANCEMENT.md`.
 
 ## Build & Run
 
@@ -41,20 +41,21 @@ Compiled with `-std=c++03 -Wall -Wextra`, zero warnings. Do not introduce C++11+
 
 The whole point of this codebase is studying C++03 → Java porting, so the dialect is load-bearing.
 
-## Architecture: four SCCs
+## Architecture: five labelled SCCs (four cyclic at the topology level)
 
 | SCC | Members | Size | Files |
 |---|---|---|---|
 | **A** (Account ↔ Transaction) | `Account`, `Transaction` | 2 | merges into mega-SCC via Account back-pointers |
 | **C** (mediator/observer mesh) | `Bank`, `Customer`, `Loan`, `AuditLogger`, `NotificationCenter`, `BranchManager`, `RiskAnalyzer` | 7 | merges with A → mega-SCC of 9 |
 | **B** (Visitor) | `TransactionVisitor`, `Deposit`, `Withdrawal`, `Transfer`, `LoanPayment` | 5 | separate SCC; concrete `LoggingVisitor` is acyclic |
-| **D** (Reporting pipeline) | `ReportEngine`, `ReportFilter`, `ReportSection`, `ReportFormatter`, `ReportWriter` | 5 | **fully isolated** from A/B/C |
+| **D** (Reporting pipeline) | `ReportEngine`, `ReportFilter`, `ReportSection`, `ReportFormatter`, `ReportWriter` | 5 | **fully isolated** from A/B/C/E |
+| **E** (Credit scoring) | `ScoreCard`, `ObligationMatrix`, `WeightingEngine`, `TierClassifier` | 4 | **fully isolated** from A/B/C/D — Tier-B, used to exercise the chunker's stub mechanism |
 
 **Acyclic baseline** (Tier-A in chunker terms): `Utils`, `Globals`, `Constants`, `Enums`, `BondCalculator`, `LoggingVisitor`, `AgeVerifier`, `TransactionBase`.
 
 `AgeVerifier` (`include/AgeVerifier.h`, `src/AgeVerifier.cpp`) is a thin RAII wrapper around the cross-platform `age_verifier` native library under `native/` (loaded at runtime via `LoadLibrary` / `dlopen`). It references no SCC A/B/C/D class and must stay that way — keep the wrapper isolated so it never gets pulled into the mega-SCC.
 
-`TransactionBase` (`include/TransactionBase.h`, `src/TransactionBase.cpp`) is an acyclic parent of `Transaction` that owns a process-wide `unsigned long instanceCounter` and gives every transaction a unique `instanceId`. Its sole purpose is to give the project a real 3-level inheritance chain `Deposit/Withdrawal/Transfer/LoanPayment → Transaction → TransactionBase` without introducing a new cycle. It references nothing in SCC A/B/C/D — keep it that way.
+`TransactionBase` (`include/TransactionBase.h`, `src/TransactionBase.cpp`) is an acyclic parent of `Transaction` that owns a process-wide `unsigned long instanceCounter` and gives every transaction a unique `instanceId`. Its sole purpose is to give the project a real 3-level inheritance chain `Deposit/Withdrawal/Transfer/LoanPayment → Transaction → TransactionBase` without introducing a new cycle. It references nothing in SCC A/B/C/D/E — keep it that way.
 
 ### Why SCC B does NOT merge into the mega-SCC
 
@@ -62,15 +63,26 @@ The whole point of this codebase is studying C++03 → Java porting, so the dial
 
 ### Why SCC D must stay isolated
 
-No header or `.cpp` under SCC D may name any class from SCC A/B/C. Verify with:
+No header or `.cpp` under SCC D may name any class from SCC A/B/C/E. Verify with:
 
 ```bash
-grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer' \
+grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer|ScoreCard|ObligationMatrix|WeightingEngine|TierClassifier' \
     include/Report*.h src/Report*.cpp
 # expected: no output
 ```
 
 If anything matches, the isolation invariant is broken and the chunker will fuse SCC D into the mega-SCC.
+
+### Why SCC E (credit scoring) must stay isolated
+
+`ScoreCard`, `ObligationMatrix`, `WeightingEngine`, `TierClassifier` form a 4-node cycle via stored back-pointers. They must not reference any class in mega-SCC / B / D, or the chunker will fuse them into the mega-SCC and the 4-node Tier-B SCC (which exercises the stub-generation path) is lost. Verify with:
+
+```bash
+grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer|Report' \
+    include/ScoreCard.h include/ObligationMatrix.h include/WeightingEngine.h include/TierClassifier.h \
+    src/ScoreCard.cpp src/ObligationMatrix.cpp src/WeightingEngine.cpp src/TierClassifier.cpp
+# expected: no output
+```
 
 ## Ownership map
 

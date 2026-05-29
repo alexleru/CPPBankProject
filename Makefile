@@ -68,6 +68,10 @@ SOURCES = $(SRC_DIR)/main.cpp \
           $(SRC_DIR)/ReportSection.cpp \
           $(SRC_DIR)/ReportFormatter.cpp \
           $(SRC_DIR)/ReportWriter.cpp \
+          $(SRC_DIR)/ScoreCard.cpp \
+          $(SRC_DIR)/ObligationMatrix.cpp \
+          $(SRC_DIR)/WeightingEngine.cpp \
+          $(SRC_DIR)/TierClassifier.cpp \
           $(SRC_DIR)/AgeVerifier.cpp
 
 # Object files (placed in BUILD_DIR)

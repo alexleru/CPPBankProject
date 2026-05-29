@@ -191,6 +191,13 @@ exposed via the `typedef struct` idiom).
   first hit), `const_iterator` iteration over
   `std::map<std::string, unsigned long>` in
   `AuditLogger::dumpEventSummary`.
+  Also nested-container values: `std::map<int, std::vector<ScoreCard*> >`
+  in `ObligationMatrix::tiers` and as the return type of
+  `TierClassifier::batchClassify` — note the `> >` spacing required by
+  C++03 (a closing `>>` would tokenize as right-shift).
+- **Pairs `<utility>`** — `std::pair<ReportEngine*, ReportEngine*>` as a
+  return type in `ReportEngine::partition`, constructed via
+  `std::make_pair` in `ReportEngine.cpp`.
 - **Math `<cmath>`** — `std::pow`, `std::sqrt` in `BondCalculator`.
 - **Algorithm `<algorithm>`** — `std::max` in `BondCalculator`.
 - **Time `<ctime>`** — `std::time`, `std::localtime`, `std::strftime`.

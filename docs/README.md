@@ -30,6 +30,9 @@ CPPBankProject/
 │   │
 │   ├── ReportEngine.h, ReportFilter.h              # SCC D (size 5, isolated)
 │   ├── ReportSection.h, ReportFormatter.h, ReportWriter.h
+│   │
+│   ├── ScoreCard.h, ObligationMatrix.h             # SCC E (size 4, Tier-B,
+│   ├── WeightingEngine.h, TierClassifier.h         #          isolated, stub demo)
 │
 ├── src/                                # One .cpp per header (+ main.cpp)
 ├── native/                             # Cross-platform native library
@@ -57,7 +60,8 @@ CPPBankProject/
 |---|---|---|
 | mega-SCC (A ∪ C) | 9 | `Account` ↔ `Transaction` + mediator/observer mesh around `Bank`. Worst-case Tier-C/D in chunker terms. |
 | SCC B | 5 | `TransactionVisitor` + 4 concrete transaction types. Visitor double-dispatch, Tier-B algorithmic. |
-| SCC D | 5 | `ReportEngine`/`Filter`/`Section`/`Formatter`/`Writer`. Pipeline with back-callback. Tier-B, fully isolated from A/B/C. |
+| SCC D | 5 | `ReportEngine`/`Filter`/`Section`/`Formatter`/`Writer`. Pipeline with back-callback. Tier-B, fully isolated from A/B/C/E. |
+| SCC E | 4 | `ScoreCard`/`ObligationMatrix`/`WeightingEngine`/`TierClassifier`. Credit-scoring cycle with stored back-pointers in all four nodes. Tier-B, fully isolated from A/B/C/D — used to exercise the chunker's stub-generation path. |
 
 Acyclic baseline (Tier-A): `Utils`, `Globals`, `Constants`, `Enums`,
 `BondCalculator`, `LoggingVisitor`, `AgeVerifier`, `TransactionBase`.
@@ -278,8 +282,13 @@ make clean && make all                              # zero warnings
 printf '1\n\n2\n\n0\n' | ./BankSystem               # exercises mega-SCC + SCC D
 
 # SCC D isolation invariant — must produce zero output
-grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer' \
+grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer|ScoreCard|ObligationMatrix|WeightingEngine|TierClassifier' \
     include/Report*.h src/Report*.cpp
+
+# SCC E isolation invariant — must produce zero output
+grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer|Report' \
+    include/ScoreCard.h include/ObligationMatrix.h include/WeightingEngine.h include/TierClassifier.h \
+    src/ScoreCard.cpp src/ObligationMatrix.cpp src/WeightingEngine.cpp src/TierClassifier.cpp
 ```
 
 ## History

@@ -197,9 +197,9 @@ Run `make native` to restore.
 This is the actual deliverable of the project — verifying it requires
 running the `java_cpp_chunkagent` chunker against this tree.
 
-### TC-5.1: Three cyclic SCCs reported
+### TC-5.1: Four cyclic SCCs reported
 
-`DependencyGraphService.get_cyclic_sccs()` must return exactly three
+`DependencyGraphService.get_cyclic_sccs()` must return exactly four
 SCCs:
 
 - mega-SCC of size 9 (`Account`, `Transaction`, `Bank`, `Customer`,
@@ -209,18 +209,31 @@ SCCs:
   `Transfer`, `LoanPayment`).
 - SCC of size 5 (`ReportEngine`, `ReportFilter`, `ReportSection`,
   `ReportFormatter`, `ReportWriter`).
+- SCC of size 4 (`ScoreCard`, `ObligationMatrix`, `WeightingEngine`,
+  `TierClassifier`) — the Tier-B stub-demo cycle.
 
 ### TC-5.2: SCC D isolation invariant
 
 ```bash
-grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer' \
+grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer|ScoreCard|ObligationMatrix|WeightingEngine|TierClassifier' \
     include/Report*.h src/Report*.cpp
 ```
 
 **Expected**: no output. If anything matches, SCC D will fuse into the
 mega-SCC and TC-5.1 fails.
 
-### TC-5.3: Acyclic baseline is acyclic
+### TC-5.3: SCC E isolation invariant
+
+```bash
+grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer|Report' \
+    include/ScoreCard.h include/ObligationMatrix.h include/WeightingEngine.h include/TierClassifier.h \
+    src/ScoreCard.cpp src/ObligationMatrix.cpp src/WeightingEngine.cpp src/TierClassifier.cpp
+```
+
+**Expected**: no output. If anything matches, SCC E will fuse into the
+mega-SCC and the 4-node Tier-B stub demo collapses.
+
+### TC-5.4: Acyclic baseline is acyclic
 
 `Utils`, `Globals`, `Constants`, `Enums`, `BondCalculator`,
 `LoggingVisitor`, `TransactionBase`, and `AgeVerifier` must appear in

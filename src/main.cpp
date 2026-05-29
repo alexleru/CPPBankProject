@@ -267,7 +267,7 @@ static void runAgeVerification() {
 
 static void displayMenu() {
     std::cout << "\n=========================================\n";
-    std::cout << "   " << BANK_NAME << " — SCC DEMO\n";
+    std::cout << "   " << BANK_NAME << " - SCC DEMO\n";
     std::cout << "=========================================\n";
     std::cout << "1. Run new-bank flow (SCC A+B+C scenario)\n";
     std::cout << "2. Generate report (SCC D scenario)\n";
@@ -281,7 +281,7 @@ int main() {
     initializeGlobals();
     clearScreen();   // exercises system(CLEAR_SCREEN) from <cstdlib>
     std::cout << BANK_NAME << " v" << VERSION
-              << " — SCC demo (" << PLATFORM_NAME << ")\n";
+              << " - SCC demo (" << PLATFORM_NAME << ")\n";
 
     int choice = -1;
     while (true) {

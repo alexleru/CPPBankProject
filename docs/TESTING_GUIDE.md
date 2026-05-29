@@ -143,25 +143,37 @@ java_cpp_chunkagent --src . --emit-graph dependency_graph.json
 
 # Then validate:
 jq '.sccs | map(select(.size > 1)) | length' dependency_graph.json
-# expected: 3
+# expected: 4
 
 jq '.sccs | map(select(.size > 1) | .size) | sort' dependency_graph.json
-# expected: [5, 5, 9]
+# expected: [4, 5, 5, 9]
 ```
 
-If anything other than `[5, 5, 9]` shows up, cross-reference
+If anything other than `[4, 5, 5, 9]` shows up, cross-reference
 `SCC_DEMO_LAYOUT.md` for the expected member lists and find what
 shifted.
 
 ## SCC D isolation check (must run every time SCC D is touched)
 
 ```bash
-grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer' \
+grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer|ScoreCard|ObligationMatrix|WeightingEngine|TierClassifier' \
     include/Report*.h src/Report*.cpp
 ```
 
-**Expected output: nothing.** Any match means SCC D references SCC
-A/B/C and will get fused into the mega-SCC.
+**Expected output: nothing.** Any match means SCC D references mega-SCC /
+SCC B / SCC E and will get fused into the mega-SCC.
+
+## SCC E isolation check (must run every time SCC E is touched)
+
+```bash
+grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer|Report' \
+    include/ScoreCard.h include/ObligationMatrix.h include/WeightingEngine.h include/TierClassifier.h \
+    src/ScoreCard.cpp src/ObligationMatrix.cpp src/WeightingEngine.cpp src/TierClassifier.cpp
+```
+
+**Expected output: nothing.** Any match means SCC E references mega-SCC /
+SCC B / SCC D and will get fused into the mega-SCC, collapsing the 4-node
+Tier-B stub demo.
 
 ## Warning-free build check
 
@@ -188,6 +200,7 @@ covers all four scenarios.
 | Build error `‘unique_ptr’ in namespace ‘std’ does not name a type` | smart pointer slipped in; use raw `new`/`delete` |
 | Warning under `-Wall` about unused parameter | cast to `(void)param;` or remove the parameter |
 | Scenario 1 segfaults on exit | likely double-delete — check ownership table in `QUICK_REFERENCE.md` |
-| Chunker reports 2 SCCs instead of 3 | SCC B fused into mega-SCC; check that `accept()` is **not** declared on `Transaction` base |
-| Chunker reports 1 mega-SCC | SCC D isolation broken; run the grep one-liner above |
-| Chunker reports 4+ SCCs | Cycle edges missing — check forward-decl + method-call pairs in `SCC_DEMO_LAYOUT.md` |
+| Chunker reports 3 SCCs instead of 4 | SCC E fused into mega-SCC (run SCC E isolation grep), or SCC B fused (check that `accept()` is **not** declared on `Transaction` base) |
+| Chunker reports 1 or 2 mega-SCCs | SCC D or SCC E isolation broken; run both grep one-liners above |
+| Chunker reports 5+ SCCs | Cycle edges missing — check forward-decl + method-call pairs in `SCC_DEMO_LAYOUT.md` |
+| Chunker reports SCC E as size 3 instead of 4 | `TierClassifier` not seen as part of the cycle — confirm its stored `ObligationMatrix*` / `WeightingEngine*` back-pointers exist and that `ScoreCard::classifier` is set somewhere |

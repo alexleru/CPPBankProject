@@ -4,14 +4,15 @@
 
 This project is a deliberate fixture for the `java_cpp_chunkagent`
 converter plugin. Its `#include` + method-call graph is engineered to
-contain **exactly three cyclic SCCs**, plus a small set of acyclic
+contain **exactly four cyclic SCCs**, plus a small set of acyclic
 baseline classes (Tier-A in chunker terminology).
 
 | SCC | Size | Pattern                                    | Chunker tier |
 |-----|------|--------------------------------------------|--------------|
-| mega-SCC (A merged with C) | 9 | Account ↔ Transaction + mediator/observer mesh | C/D (worst-case)   |
-| SCC B                       | 5 | Visitor / double dispatch                       | B (algorithmic)    |
-| SCC D                       | 5 | Reporting pipeline with back-callback           | B (algorithmic)    |
+| mega-SCC (A merged with C)  | 9 | Account ↔ Transaction + mediator/observer mesh           | C/D (worst-case)  |
+| SCC B                       | 5 | Visitor / double dispatch                                 | B (algorithmic)   |
+| SCC D                       | 5 | Reporting pipeline with back-callback                     | B (algorithmic)   |
+| SCC E                       | 4 | Credit-scoring (ScoreCard / ObligationMatrix / WeightingEngine / TierClassifier) — stored back-pointers in all four nodes | B (stub-demo) |
 
 Acyclic baseline (Tier A):
 `Utils`, `Globals`, `Constants`, `Enums`, `BondCalculator`,
@@ -210,14 +211,77 @@ All five nodes are reachable from every other node — single SCC.
 ### Isolation invariant
 
 **Hard rule**: no SCC D header forward-declares or `#include`s any
-class from SCC A/B/C, and no `.cpp` of an SCC D class references any
-SCC A/B/C type by name. Verified by `grep`:
+class from SCC A/B/C/E, and no `.cpp` of an SCC D class references any
+SCC A/B/C/E type by name. Verified by `grep`:
 
 ```bash
-grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer' \
+grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer|ScoreCard|ObligationMatrix|WeightingEngine|TierClassifier' \
     include/Report*.h src/Report*.cpp
 # expected: no matches
 ```
+
+---
+
+## SCC E (size 4): Credit-scoring subsystem
+
+### Members
+
+```
+              +------------+
+              | ScoreCard  |<---------+
+              +-----+------+          |
+                ^   |   ^             |
+                |   |   |             |
+   +------------+   |   +-------------+--------+
+   |               v                  ^        |
+   |    +-------------------+         |        |
+   |    | ObligationMatrix  |<--------+        |
+   |    +---------+---------+                  |
+   |              ^                            |
+   |              |                            |
+   |    +---------+-----------+                |
+   |    |  WeightingEngine    |<---------------+
+   |    +---------+-----------+                |
+   |              ^                            |
+   |              |                            |
+   |    +---------+-----------+                |
+   +--->|  TierClassifier     |----------------+
+        +---------------------+
+```
+
+### Cycle edges (stored back-pointers in all four nodes)
+
+- `ScoreCard` holds `ObligationMatrix*`, `WeightingEngine*`, `TierClassifier*` — back-pointers established by `registerWith()` / `assignClassifier()`.
+- `ObligationMatrix` holds `WeightingEngine*`, `TierClassifier*` and `std::map<int, std::vector<ScoreCard*> >` entries.
+- `WeightingEngine` holds `ObligationMatrix*`, `TierClassifier*`.
+- `TierClassifier` holds `ObligationMatrix*`, `WeightingEngine*` (set by `bind()`).
+
+Cross-partner method signatures include `recalibrate(WeightingEngine*, ScoreCard*)`, `batchClassify(ObligationMatrix*, WeightingEngine*) → std::map<int, std::vector<ScoreCard*> >`, and `reweightMatrix(ObligationMatrix*, double) → std::vector<ScoreCard*>` — see `CPP_BANK_PROJECT_COMPLEXITY_ENHANCEMENT.md` for the full inventory.
+
+### Why SCC E exists separately from the mega-SCC
+
+The credit-scoring subsystem has **no edges** to any class in the
+mega-SCC, SCC B, or SCC D. The vocabulary is deliberately non-banking
+(`ScoreCard`, `ObligationMatrix`, `WeightingEngine`, `TierClassifier`)
+to make LLM-guessed Java types diverge from the real ones when stubs
+are absent. The chunker classifies SCC E as Tier-B (4+ nodes,
+algorithmic) and exercises the weighted-greedy FAS + stub-generation
+path.
+
+### Isolation invariant
+
+**Hard rule**: no SCC E header or `.cpp` references any class from
+the mega-SCC / SCC B / SCC D. Verified by `grep`:
+
+```bash
+grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager|RiskAnalyzer|Report' \
+    include/ScoreCard.h include/ObligationMatrix.h include/WeightingEngine.h include/TierClassifier.h \
+    src/ScoreCard.cpp src/ObligationMatrix.cpp src/WeightingEngine.cpp src/TierClassifier.cpp
+# expected: no matches
+```
+
+If anything matches, the chunker will fuse SCC E into the mega-SCC and
+the Tier-B stub demo collapses.
 
 ---
 
@@ -238,7 +302,7 @@ grep -E 'Account|Bank|Customer|Transaction|Loan|Audit|Notification|BranchManager
 
 ## Expected `dependency_graph.json` shape
 
-`DependencyGraphService.get_cyclic_sccs()` should return **exactly 3**
+`DependencyGraphService.get_cyclic_sccs()` should return **exactly 4**
 strongly-connected components:
 
 | SCC ID | Approx. size | Members (sorted)                                                                                                            |
@@ -246,10 +310,12 @@ strongly-connected components:
 | mega   | 9            | Account, AuditLogger, Bank, BranchManager, Customer, Loan, NotificationCenter, RiskAnalyzer, Transaction                     |
 | visitor| 5            | Deposit, LoanPayment, Transfer, TransactionVisitor, Withdrawal                                                              |
 | report | 5            | ReportEngine, ReportFilter, ReportFormatter, ReportSection, ReportWriter                                                    |
+| credit | 4            | ObligationMatrix, ScoreCard, TierClassifier, WeightingEngine                                                                |
 
 **Critical check**: no edge exists between any reporting-pipeline class
-and any banking class. If the chunker reports SCC D members fused into
-the mega-SCC, the isolation invariant has been violated and must be
+and any other SCC, and no edge exists between any credit-scoring class
+and any other SCC. If the chunker reports SCC D or SCC E members fused
+into the mega-SCC, an isolation invariant has been violated and must be
 fixed before reporting the demo as correct.
 
 ---

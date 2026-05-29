@@ -25,3 +25,19 @@ void ReportWriter::write(ReportEngine* e, std::ostream& out) {
         if (e) e->onPageReady(&section);
     }
 }
+
+std::vector<ReportSection*> ReportWriter::batchWrite(
+    const std::vector<ReportSection*>& sections,
+    ReportFilter*                       filter,
+    ReportEngine*                       engine) {
+    std::vector<ReportSection*> passed;
+    for (size_t i = 0; i < sections.size(); ++i) {
+        ReportSection* s = sections[i];
+        if (!s) continue;
+        if (!filter || filter->getActiveRules(s)) {
+            passed.push_back(s);
+            if (engine) engine->onPageReady(s);
+        }
+    }
+    return passed;
+}
